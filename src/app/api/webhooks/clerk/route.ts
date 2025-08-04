@@ -1,7 +1,8 @@
-import { db } from "@/db";
 import { UserJSON, WebhookEvent } from "@clerk/nextjs/server";
 import { headers } from "next/headers";
 import { Webhook } from "svix";
+
+import { db } from "@/db";
 
 export async function POST(req: Request) {
 	// You can find this in the Clerk Dashboard -> Webhooks -> choose the endpoint
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
 			if (!user) {
 				throw new Error("User not created");
 			}
-		} catch (error) {
+		} catch {
 			throw new Error("Error creating user");
 		}
 	}
@@ -85,7 +86,7 @@ export async function POST(req: Request) {
 			if (!user) {
 				throw new Error("User not updated");
 			}
-		} catch (error) {
+		} catch {
 			throw new Error("Error updating user");
 		}
 	}
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
 	if (eventType === "user.deleted") {
 		try {
 			await db.user.delete({ where: { userId: id! } });
-		} catch (error) {
+		} catch {
 			throw new Error("Error deleting user");
 		}
 	}
