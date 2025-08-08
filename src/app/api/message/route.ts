@@ -1,7 +1,7 @@
 import { mistral } from '@ai-sdk/mistral';
 import { currentUser } from '@clerk/nextjs/server';
 import { PineconeStore } from '@langchain/pinecone';
-import { streamText } from 'ai';
+import { convertToModelMessages, streamText, UIMessage } from 'ai';
 import { NextRequest } from 'next/server';
 
 import { db } from '@/db';
@@ -16,12 +16,19 @@ export const maxDuration = 60;
 const model = mistral('mistral-large-latest');
 
 export const POST = async (req: NextRequest) => {
-  const { messages, fileId } = await req.json();
+  const {
+    messages,
+    fileId,
+    language,
+  }: { messages: UIMessage[]; fileId: string; language: string } =
+    await req.json();
 
   const user = await currentUser();
+
   if (!user) return new Response('Unauthorized', { status: 401 });
 
   const { success } = await rateLimiter.limit(user.id);
+
   if (!success) {
     return new Response('Rate limit exceeded please try again later', {
       status: 429,
@@ -39,7 +46,8 @@ export const POST = async (req: NextRequest) => {
 
   // Get the last user message
   const lastMessage = messages[messages.length - 1];
-  const messageText = lastMessage.content;
+  const messageText =
+    lastMessage.parts.find((part) => part.type === 'text')?.text || '';
 
   // Save user message to database
   await db.message.create({
@@ -85,16 +93,13 @@ export const POST = async (req: NextRequest) => {
     .join('');
 
   // Create system prompt using the template
-  const systemPrompt = chatPrompt(context, chatHistory);
+  const systemPrompt = chatPrompt(context, chatHistory, language);
 
   // Generate response using AI SDK
   const result = streamText({
     model,
     system: systemPrompt,
-    messages: messages.map((m: { role: string; content: string }) => ({
-      role: m.role,
-      content: m.content,
-    })),
+    messages: convertToModelMessages(messages),
     onFinish: async ({ text: generatedText }) => {
       try {
         await db.message.create({

@@ -3,7 +3,7 @@ import React from 'react';
 
 const Maintenance = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-linear-to-b from-gray-50 to-gray-100 flex items-center justify-center px-4">
       <div className="max-w-3xl mx-auto text-center space-y-8">
         {/* Animated Icon */}
         <div className="relative w-32 h-32 mx-auto mb-8">

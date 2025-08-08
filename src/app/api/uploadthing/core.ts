@@ -40,7 +40,7 @@ export const ourFileRouter: FileRouter = {
       });
 
       try {
-        const response = await fetch(file.url);
+        const response = await fetch(file.ufsUrl);
         const blob = await response.blob();
         const loader = new PDFLoader(blob);
         const pageLevelDocs = await loader.load();
