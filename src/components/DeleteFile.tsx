@@ -49,15 +49,12 @@ export default function DeleteFile({ id, className }: DeleteFileProps) {
     onMutate: async () => {
       setCurrentlyDeletingFile(id);
 
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['user-files'] });
 
-      // Snapshot the previous value for rollback on error
       const previousFiles = queryClient.getQueryData<FileType[]>([
         'user-files',
       ]);
 
-      // Optimistically update cache by removing the file
       queryClient.setQueryData(
         ['user-files'],
         (oldFiles: FileType[] | undefined) => {
