@@ -38,9 +38,11 @@ export function FAQ() {
           <AccordionTrigger className="text-white">
             What types of documents can I upload?
           </AccordionTrigger>
-            <AccordionContent className="text-gray-300">
-            We currently support PDF files up to 10MB in size. Support for additional formats like Word documents, PowerPoint presentations, and text files is coming soon.
-            </AccordionContent>
+          <AccordionContent className="text-gray-300">
+            We currently support PDF files up to 10MB in size. Support for
+            additional formats like Word documents, PowerPoint presentations,
+            and text files is coming soon.
+          </AccordionContent>
         </AccordionItem>
         <AccordionItem value="item-4">
           <AccordionTrigger className="text-white">

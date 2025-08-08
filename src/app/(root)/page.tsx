@@ -5,7 +5,6 @@ import Link from 'next/link';
 import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 import { buttonVariants } from '@/components/ui/button';
 
-
 export default function Home() {
   return (
     <>
