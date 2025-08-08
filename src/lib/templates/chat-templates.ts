@@ -1,4 +1,4 @@
-import { ChatPromptTemplate } from "@langchain/core/prompts";
+import { ChatPromptTemplate } from '@langchain/core/prompts';
 
 export const getRelatedWords = ChatPromptTemplate.fromTemplate(`
 	You are an AI assistant specialized in analyzing text and extracting concise and relevant keywords. Your task is to:
@@ -12,9 +12,9 @@ export const getRelatedWords = ChatPromptTemplate.fromTemplate(`
 	`);
 
 const paraphraseTemplate = ChatPromptTemplate.fromMessages([
-	[
-		"system",
-		`You are an expert writing assistant specializing in paraphrasing text while preserving its original format.
+  [
+    'system',
+    `You are an expert writing assistant specializing in paraphrasing text while preserving its original format.
 
 Core Instructions:
 1. Maintain all key information and technical terms
@@ -22,13 +22,20 @@ Core Instructions:
 3. Keep the original tone and complexity
 
 Input text to paraphrase: {text}`,
-	],
+  ],
 ]);
 
-export const chatPrompt = (context: string, chatHistory: string, language: string = "english") => {
-	const languageInstruction = language === "english" ? "" : `\n6. ALWAYS respond in ${language} language only`;
+export const chatPrompt = (
+  context: string,
+  chatHistory: string,
+  language: string = 'english'
+) => {
+  const languageInstruction =
+    language === 'english'
+      ? ''
+      : `\n6. ALWAYS respond in ${language} language only`;
 
-	return `You are an AI assistant specialized in analyzing documents and providing accurate information.
+  return `You are an AI assistant specialized in analyzing documents and providing accurate information.
         
 Rules:
 1. Use the previous chat history if needed

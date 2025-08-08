@@ -1,0 +1,43 @@
+name: Lint & Format
+
+on:
+  push:
+    branches-ignore: [ main ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-format:
+    name: ESLint & Prettier
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client (if schema present)
+        run: |
+          if [ -f prisma/schema.prisma ]; then npx prisma generate; fi
+
+      - name: Lint (src only)
+        run: npx eslint "src/**/*.{ts,tsx,js,jsx}" --max-warnings=0
+
+      - name: Prettier Check (src only)
+        run: npm run format
+
+      - name: Report size (optional)
+        if: always()
+        run: du -sh . | sed 's/^/Workspace size: /'
