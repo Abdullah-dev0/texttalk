@@ -21,14 +21,6 @@ export const ourFileRouter: FileRouter = {
       return { userId: user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      const isFileExist = await db.file.findFirst({
-        where: {
-          key: file.key,
-        },
-      });
-
-      if (isFileExist) return;
-
       const createdFile = await db.file.create({
         data: {
           key: file.key,
@@ -40,7 +32,7 @@ export const ourFileRouter: FileRouter = {
       });
 
       try {
-        const response = await fetch(file.url);
+        const response = await fetch(file.ufsUrl);
         const blob = await response.blob();
         const loader = new PDFLoader(blob);
         const pageLevelDocs = await loader.load();

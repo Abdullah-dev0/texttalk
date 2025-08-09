@@ -1,7 +1,12 @@
 import { mistral } from '@ai-sdk/mistral';
 import { currentUser } from '@clerk/nextjs/server';
 import { PineconeStore } from '@langchain/pinecone';
-import { convertToModelMessages, streamText, UIMessage } from 'ai';
+import {
+  consumeStream,
+  convertToModelMessages,
+  streamText,
+  UIMessage,
+} from 'ai';
 import { NextRequest } from 'next/server';
 
 import { db } from '@/db';
@@ -43,45 +48,45 @@ export const POST = async (req: NextRequest) => {
 
   if (!file) return new Response('Not found', { status: 404 });
 
-  // Get the last user message
+  // Get last message
   const lastMessage = messages[messages.length - 1];
-  const messageText =
-    lastMessage.parts.find((part) => part.type === 'text')?.text || '';
 
-  // Save user message to database
-  await db.message.create({
-    data: {
-      text: messageText,
-      isUserMessage: true,
-      userId: user.id,
-      fileId,
-    },
-  });
+  const textParts = lastMessage.parts.filter(
+    (part): part is { type: 'text'; text: string } => part.type === 'text'
+  );
 
-  // Get vector store and search for relevant documents
-  const vectorStore = await PineconeStore.fromExistingIndex(embeddings, {
+  // Grab the last text part's text
+  const messageText = textParts.at(-1)?.text || '';
+
+  const vectorStorePromise = PineconeStore.fromExistingIndex(embeddings, {
     pineconeIndex: index,
     namespace: file.id,
   });
 
-  const retrievedDocs = await vectorStore.similaritySearch(messageText, 3);
+  // Fetch relevant docs and recent messages in parallel
+  const [retrievedDocs, prevMessagesList] = await Promise.all([
+    vectorStorePromise.then((vs) => vs.similaritySearch(messageText, 3)),
+    db.message.findMany({
+      where: { fileId },
+      orderBy: { createdAt: 'desc' },
+      take: 6,
+    }),
+  ]);
 
-  // Get recent messages for context
-  const prevMessages = await db.message.findMany({
-    where: { fileId },
-    orderBy: { createdAt: 'asc' },
-    take: 6,
-  });
-
-  const formattedPrevMessages = prevMessages.map((msg) => ({
-    role: msg.isUserMessage ? ('user' as const) : ('assistant' as const),
-    content: msg.text,
-  }));
+  // Re-order to chronological
+  const formattedPrevMessages = prevMessagesList
+    .slice()
+    .reverse()
+    .map((msg) => ({
+      role: msg.isUserMessage ? ('user' as const) : ('assistant' as const),
+      content: msg.text,
+    }));
 
   const context = retrievedDocs
-    .map(
-      (doc) => `${doc.pageContent}\nPage Number: ${doc.metadata?.pageNumber}`
-    )
+    .map((doc) => {
+      const content = doc.pageContent || '';
+      return `${content}\nPage Number: ${doc.metadata?.pageNumber}`;
+    })
     .join('\n\n');
 
   const chatHistory = formattedPrevMessages
@@ -99,21 +104,36 @@ export const POST = async (req: NextRequest) => {
     model,
     system: systemPrompt,
     messages: convertToModelMessages(messages),
+    maxOutputTokens: 512,
+    temperature: 0.3,
+    abortSignal: req.signal,
     onFinish: async ({ text: generatedText }) => {
       try {
-        await db.message.create({
-          data: {
-            text: generatedText,
-            isUserMessage: false,
-            fileId,
-            userId: user.id,
-          },
-        });
+        await db.$transaction([
+          db.message.create({
+            data: {
+              text: messageText,
+              isUserMessage: true,
+              userId: user.id,
+              fileId,
+            },
+          }),
+          db.message.create({
+            data: {
+              text: generatedText,
+              isUserMessage: false,
+              fileId,
+              userId: user.id,
+            },
+          }),
+        ]);
       } catch (error) {
         console.error('Error in onFinish callback:', error);
       }
     },
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    consumeSseStream: ({ stream }) => consumeStream({ stream }),
+  });
 };
