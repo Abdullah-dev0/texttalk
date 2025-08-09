@@ -43,6 +43,7 @@ Rules:
 3. If context doesn't support the answer, say "I don't have enough information"
 4. Do not answer any other questions that are not related to the context
 5. Be concise and focused on the context${languageInstruction}
+6. If you have information on which page number the answer is located, please include it.
 
 Context: ${context}
 Previous Chat: ${chatHistory}`;

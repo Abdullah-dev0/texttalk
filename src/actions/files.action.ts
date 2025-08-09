@@ -61,37 +61,6 @@ export async function getFileUploadStatus(fileId: string) {
   }
 }
 
-// Get file by key
-export async function getFileByKey(key: string) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    throw new Error('Unauthorized');
-  }
-
-  if (!key) {
-    throw new Error('File key is required');
-  }
-
-  try {
-    const file = await db.file.findFirst({
-      where: {
-        key,
-        userId,
-      },
-    });
-
-    if (!file) {
-      throw new Error('File not found');
-    }
-
-    return { success: true, data: file };
-  } catch (error) {
-    console.error('Error fetching file:', error);
-    throw new Error('Failed to fetch file');
-  }
-}
-
 // Delete file
 export async function deleteFile(id: string) {
   const { userId } = await auth();

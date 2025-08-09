@@ -21,14 +21,6 @@ export const ourFileRouter: FileRouter = {
       return { userId: user.id };
     })
     .onUploadComplete(async ({ metadata, file }) => {
-      const isFileExist = await db.file.findFirst({
-        where: {
-          key: file.key,
-        },
-      });
-
-      if (isFileExist) return;
-
       const createdFile = await db.file.create({
         data: {
           key: file.key,

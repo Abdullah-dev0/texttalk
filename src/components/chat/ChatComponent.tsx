@@ -23,23 +23,23 @@ const ChatComponent = ({ file }: SimpleChatProps) => {
   const [selectedLanguage, setSelectedLanguage] = useState('english');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status } = useChat({
+  const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
     }),
     onError: (error) => {
-      toast.error(error.message);
+      toast.error(error.message || 'An error occurred');
+      setMessages([]);
     },
   });
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, status]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim() && status === 'ready') {
+    if (input.trim()) {
       sendMessage(
         { text: input },
         {
@@ -135,7 +135,7 @@ const ChatComponent = ({ file }: SimpleChatProps) => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about your PDF"
-              disabled={status !== 'ready'}
+              disabled={status === 'streaming' || status === 'submitted'}
               className="flex-1 min-h-[80px] max-h-[200px] resize-none"
               rows={3}
               onKeyDown={(e) => {
@@ -147,7 +147,11 @@ const ChatComponent = ({ file }: SimpleChatProps) => {
             />
             <Button
               type="submit"
-              disabled={status !== 'ready' || !input.trim()}
+              disabled={
+                status === 'streaming' ||
+                !input.trim() ||
+                status === 'submitted'
+              }
               className="shrink-0"
             >
               <Send className="h-4 w-4" />
