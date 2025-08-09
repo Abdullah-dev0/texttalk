@@ -33,3 +33,6 @@ jobs:
 
       - name: Prettier Check (src only)
         run: npm run format
+
+      - name: Build Check
+        run: npm run build

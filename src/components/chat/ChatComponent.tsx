@@ -23,13 +23,12 @@ const ChatComponent = ({ file }: SimpleChatProps) => {
   const [selectedLanguage, setSelectedLanguage] = useState('english');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status, setMessages } = useChat({
+  const { messages, sendMessage, status } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
     }),
     onError: (error) => {
       toast.error(error.message || 'An error occurred');
-      setMessages([]);
     },
   });
 
@@ -138,12 +137,6 @@ const ChatComponent = ({ file }: SimpleChatProps) => {
               disabled={status === 'streaming' || status === 'submitted'}
               className="flex-1 min-h-[80px] max-h-[200px] resize-none"
               rows={3}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSubmit(e);
-                }
-              }}
             />
             <Button
               type="submit"

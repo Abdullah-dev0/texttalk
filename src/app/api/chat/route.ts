@@ -48,17 +48,16 @@ export const POST = async (req: NextRequest) => {
 
   if (!file) return new Response('Not found', { status: 404 });
 
-  // Get the last user message
+  // Get last message
   const lastMessage = messages[messages.length - 1];
-  const messageText =
-    lastMessage.parts.find((part) => part.type === 'text')?.text || '';
 
-  const MAX_HISTORY_MESSAGES = 5;
-  const trimmedMessages = messages.slice(-MAX_HISTORY_MESSAGES);
+  const textParts = lastMessage.parts.filter(
+    (part): part is { type: 'text'; text: string } => part.type === 'text'
+  );
 
-  // Defer user message persistence to onFinish to avoid pre-stream DB writes
+  // Grab the last text part's text
+  const messageText = textParts.at(-1)?.text || '';
 
-  // Prepare vector store
   const vectorStorePromise = PineconeStore.fromExistingIndex(embeddings, {
     pineconeIndex: index,
     namespace: file.id,
@@ -104,7 +103,7 @@ export const POST = async (req: NextRequest) => {
   const result = streamText({
     model,
     system: systemPrompt,
-    messages: convertToModelMessages(trimmedMessages),
+    messages: convertToModelMessages(messages),
     maxOutputTokens: 512,
     temperature: 0.3,
     abortSignal: req.signal,
