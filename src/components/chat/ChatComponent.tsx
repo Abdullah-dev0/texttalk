@@ -1,63 +1,133 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
+import { useUser } from '@clerk/nextjs';
 import { File } from '@prisma/client';
-import { DefaultChatTransport } from 'ai';
+import { useInfiniteQuery } from '@tanstack/react-query';
+import { DefaultChatTransport, type UIMessage } from 'ai';
 import { ChevronLeft, Loader2, Send } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useRef, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
+
+import {
+  getMessagesChunk,
+  type MessageDTO,
+  type MessagesChunk,
+} from '@/actions/messages.action';
 
 import { Button, buttonVariants } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 
 import SelectLanguage from './SelectLanguage';
+import MessageItem from './messages/MessageItem';
 
-interface SimpleChatProps {
-  file: File;
-}
-
-const ChatComponent = ({ file }: SimpleChatProps) => {
+const ChatComponent = ({ file }: { file: File }) => {
   const [input, setInput] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('english');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const { messages, sendMessage, status } = useChat({
+  const { user } = useUser();
+
+  // Live chat with Vercel AI SDK
+  const {
+    messages: liveMessages,
+    sendMessage,
+    status,
+    setMessages,
+  } = useChat({
     transport: new DefaultChatTransport({
       api: '/api/chat',
     }),
     onError: (error) => {
       toast.error(error.message || 'An error occurred');
+      setMessages([]);
     },
   });
 
+  const {
+    data: historyData,
+    status: historyStatus,
+    fetchNextPage,
+    isLoading,
+    hasNextPage,
+    isFetchingNextPage,
+    refetch: fetchOlder,
+  } = useInfiniteQuery<MessagesChunk>(
+    ['messages', file.id],
+    async ({ pageParam = undefined }) =>
+      await getMessagesChunk({
+        fileId: file.id,
+        before: pageParam as string | undefined,
+        take: 10,
+      }),
+    {
+      getNextPageParam: (lastPage) =>
+        lastPage.hasMore ? lastPage.nextCursor : undefined,
+    }
+  );
+
+  // Auto scroll to bottom when new live message arrives
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, status]);
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, 100); // slight delay to ensure DOM is painted
+
+    return () => clearTimeout(timer);
+  }, [liveMessages, status]);
+
+  // Derived lists for simple rendering
+  const historyFlat: MessageDTO[] = useMemo(() => {
+    const pages = (historyData?.pages ?? []) as MessagesChunk[];
+    if (!pages.length) return [];
+    // Oldest first across pages
+    return [...pages].reverse().flatMap((p) => p.items);
+  }, [historyData]);
+
+  const combinedMessages: Array<MessageDTO | UIMessage> = useMemo(
+    () => [...historyFlat, ...liveMessages] as Array<MessageDTO | UIMessage>,
+    [historyFlat, liveMessages]
+  );
+
+  const historyIdSet = useMemo(
+    () => new Set(historyFlat.map((m) => m.id)),
+    [historyFlat]
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (input.trim()) {
       sendMessage(
         { text: input },
-        {
-          body: { fileId: file.id, language: selectedLanguage },
-        }
+        { body: { fileId: file.id, language: selectedLanguage } }
       );
       setInput('');
     }
   };
 
+  {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center py-8 ">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            <span className="text-sm font-medium">Loading chat history...</span>
+          </div>
+        </div>
+      );
+    }
+  }
+
   return (
     <div className="relative h-full bg-background flex flex-col">
+      {/* Top Bar */}
       <div className="border-b bg-card p-4 flex justify-between items-center w-full">
         <Link
           href="/dashboard"
           className={buttonVariants({ variant: 'ghost', size: 'sm' })}
         >
           <ChevronLeft className="h-6 w-6 mr-1" />
-          <span className="text-lg"> Back to Dashboard</span>
+          <span className="text-lg">Back to Dashboard</span>
         </Link>
         <SelectLanguage
           value={selectedLanguage}
@@ -66,64 +136,90 @@ const ChatComponent = ({ file }: SimpleChatProps) => {
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
-        {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center max-w-md mx-auto">
-            <h3 className="text-xl font-semibold mb-2">Ready to chat!</h3>
-            <p className="text-muted-foreground">
-              Ask a question about your PDF in {selectedLanguage}.
-            </p>
-          </div>
-        ) : (
-          <div className="max-w-4xl mx-auto space-y-4">
-            {messages.map((message) => (
-              <div
-                key={message.id}
-                className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="max-w-4xl mx-auto p-6 space-y-6">
+          {/* Load older messages */}
+          {hasNextPage && (
+            <div className="flex justify-center">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
               >
-                {/* Avatar/Emoji for AI (left side) */}
-                {message.role === 'assistant' && (
-                  <div className="shrink-0 w-8 h-8 bg-primary/15 text-primary rounded-full flex items-center justify-center text-lg">
-                    🤖
-                  </div>
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading...
+                  </>
+                ) : (
+                  'Load older messages'
                 )}
+              </Button>
+            </div>
+          )}
 
-                <div className="max-w-[80%] p-3 rounded-lg bg-card border shadow-xs break-words">
-                  {message.parts.map((part, index) =>
-                    part.type === 'text' ? (
-                      <div key={index}>
-                        <ReactMarkdown className="prose max-w-none [&_*]:break-words">
-                          {part.text}
-                        </ReactMarkdown>
-                      </div>
-                    ) : null
-                  )}
+          {/* Error */}
+          {historyStatus === 'error' && (
+            <div className="text-center text-red-500">
+              Failed to load history
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchOlder()}
+                className="ml-2"
+              >
+                Retry
+              </Button>
+            </div>
+          )}
+
+          {/* Combined messages */}
+          {combinedMessages.length > 0 ? (
+            combinedMessages.map((message) => (
+              <MessageItem
+                key={message.id}
+                message={message}
+                user={user || null}
+                isHistory={historyIdSet.has(message.id)}
+              />
+            ))
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mb-4 shadow-lg">
+                💬
+              </div>
+              <h3 className="text-xl font-semibold mb-2 text-foreground">
+                Ready to chat!
+              </h3>
+              <p className="text-muted-foreground max-w-sm">
+                Ask questions about your PDF in {selectedLanguage}.
+              </p>
+            </div>
+          )}
+
+          {/* Typing indicator */}
+          {status === 'submitted' && (
+            <div className="flex gap-4 justify-start mt-6">
+              <div className="shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-semibold shadow-md">
+                AI
+              </div>
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-1">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
+                  </div>
+                  <span className="text-sm text-muted-foreground ml-2">
+                    AI is thinking...
+                  </span>
                 </div>
-
-                {/* Avatar/Emoji for User (right side) */}
-                {message.role === 'user' && (
-                  <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-lg">
-                    👤
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        {status === 'submitted' && (
-          <div className="max-w-4xl mx-auto">
-            <div className="flex justify-start gap-3">
-              <div className="shrink-0 w-8 h-8 bg-primary/15 text-primary rounded-full flex items-center justify-center text-lg">
-                🤖
-              </div>
-              <div className="bg-card border shadow-xs p-3 rounded-lg">
-                <Loader2 className="h-4 w-4 animate-spin" />
               </div>
             </div>
-          </div>
-        )}
-        {/* Auto-scroll target */}
-        <div ref={messagesEndRef} />
+          )}
+
+          <div ref={messagesEndRef} className="h-4" />
+        </div>
       </div>
 
       {/* Input */}
