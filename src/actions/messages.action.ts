@@ -26,7 +26,7 @@ export type MessagesChunk = {
   total?: number; // total count for simple pagination
 };
 
-export async function getMessagesChunk({
+export async function getMessages({
   fileId,
   before, // ISO string; fetch messages with createdAt < before
   take = 4,
@@ -75,46 +75,4 @@ export async function getMessagesChunk({
   const nextCursor = itemsAsc[0]?.createdAt; // oldest in this batch
 
   return { items: itemsAsc, hasMore, nextCursor };
-}
-
-export async function getMessagesSimple({
-  fileId,
-  skip = 0,
-  take = 10,
-}: {
-  fileId: string;
-  skip?: number;
-  take?: number;
-}): Promise<MessagesChunk> {
-  const { userId } = await auth();
-  if (!userId) throw new Error('Unauthorized');
-  if (!fileId) throw new Error('File ID is required');
-  if (!take || take < 1) throw new Error('take must be positive');
-
-  const file = await db.file.findFirst({ where: { id: fileId, userId } });
-  if (!file) throw new Error('File not found or unauthorized');
-
-  // Get total count for pagination info
-  const total = await db.message.count({ where: { fileId } });
-
-  const messages = await db.message.findMany({
-    where: { fileId },
-    orderBy: { createdAt: 'desc' },
-    skip,
-    take,
-  });
-
-  const hasMore = skip + take < total;
-
-  const items = messages.map((m) => ({
-    id: m.id,
-    text: m.text,
-    isUserMessage: m.isUserMessage,
-    createdAt: m.createdAt.toISOString(),
-    updatedAt: m.updatedAt.toISOString(),
-    userId: m.userId,
-    fileId: m.fileId,
-  }));
-
-  return { items, hasMore, total };
 }

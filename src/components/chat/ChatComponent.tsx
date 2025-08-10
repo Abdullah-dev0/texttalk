@@ -11,7 +11,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
-  getMessagesChunk,
+  getMessages,
   type MessageDTO,
   type MessagesChunk,
 } from '@/actions/messages.action';
@@ -56,7 +56,7 @@ const ChatComponent = ({ file }: { file: File }) => {
   } = useInfiniteQuery<MessagesChunk>(
     ['messages', file.id],
     async ({ pageParam = undefined }) =>
-      await getMessagesChunk({
+      await getMessages({
         fileId: file.id,
         before: pageParam as string | undefined,
         take: 10,
