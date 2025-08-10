@@ -66,21 +66,13 @@ const MessageItem = ({
         </div>
       )}
 
-      <div
-        className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
-          isUser
-            ? 'bg-blue-500 text-white'
-            : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        }`}
-      >
+      <div className="max-w-[75%] rounded-2xl px-4 py-3 shadow-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <div className={`text-sm ${isUser ? 'text-white' : 'text-foreground'}`}>
           <ReactMarkdown className="prose prose-sm max-w-none [&_*]:break-words [&_p]:mb-2 [&_p:last-child]:mb-0">
             {messageText}
           </ReactMarkdown>
         </div>
-        <div
-          className={`text-xs mt-2 opacity-70 ${isUser ? 'text-blue-100' : 'text-muted-foreground'}`}
-        >
+        <div className="text-xs mt-2 opacity-70 text-muted-foreground">
           {isHistory && isHistoryMessage(message)
             ? formatTime(message.createdAt)
             : 'just now'}
