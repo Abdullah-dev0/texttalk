@@ -13,7 +13,7 @@ const Providers = ({ children }: ProvidersProps) => {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 5000, // 5 minutes
+            staleTime: 5 * 60 * 1000, // 5 minutes
             retry: (failureCount, error) => {
               if (
                 error instanceof Error &&

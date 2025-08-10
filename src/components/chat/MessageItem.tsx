@@ -50,7 +50,15 @@ const MessageItem = ({
 
   const messageText = isHistoryMessage(message)
     ? message.text
-    : message.parts?.find((p) => p.type === 'text')?.text || '';
+    : Array.isArray(message.parts)
+      ? message.parts
+          .filter(
+            (p): p is { type: 'text'; text: string } =>
+              p.type === 'text' && typeof p.text === 'string'
+          )
+          .map((p) => p.text)
+          .join('')
+      : '';
 
   return (
     <div className={`flex gap-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -62,12 +70,16 @@ const MessageItem = ({
       )}
 
       <div
-        className={`max-w-[75%] rounded-2xl px-4 shadow-sm bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 ${isUser ? 'py-2' : 'py-3'}`}
+        className={`max-w-[75%] rounded-2xl px-4 shadow-sm ${
+          isUser
+            ? 'bg-blue-500 text-white py-2'
+            : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 py-3'
+        }`}
       >
         <div
-          className={`text-sm ${isUser ? 'text-red-500' : 'text-gray-900 dark:text-white'}`}
+          className={`text-sm ${isUser ? 'text-white' : 'text-gray-900 dark:text-white'}`}
         >
-          <ReactMarkdown className="prose prose-xl">
+          <ReactMarkdown className="prose prose-sm max-w-none">
             {messageText}
           </ReactMarkdown>
         </div>

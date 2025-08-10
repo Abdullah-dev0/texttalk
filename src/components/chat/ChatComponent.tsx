@@ -105,17 +105,16 @@ const ChatComponent = ({ file }: { file: File }) => {
     }
   };
 
-  {
-    if (isLoading) {
-      return (
-        <div className="flex justify-center py-8 ">
-          <div className="flex items-center gap-3 text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span className="text-sm font-medium">Loading chat history...</span>
-          </div>
+  // Early return for loading history
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-8 ">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span className="text-sm font-medium">Loading chat history...</span>
         </div>
-      );
-    }
+      </div>
+    );
   }
 
   return (

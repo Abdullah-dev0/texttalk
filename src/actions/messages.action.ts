@@ -69,7 +69,7 @@ export async function getMessagesChunk({
       createdAt: m.createdAt.toISOString(),
       updatedAt: m.updatedAt.toISOString(),
       userId: m.userId ?? null,
-      fileId: m.fileId!,
+      fileId: m.fileId,
     }));
 
   const nextCursor = itemsAsc[0]?.createdAt; // oldest in this batch
@@ -112,8 +112,8 @@ export async function getMessagesSimple({
     isUserMessage: m.isUserMessage,
     createdAt: m.createdAt.toISOString(),
     updatedAt: m.updatedAt.toISOString(),
-    userId: m.userId ?? null,
-    fileId: m.fileId!,
+    userId: m.userId,
+    fileId: m.fileId,
   }));
 
   return { items, hasMore, total };
