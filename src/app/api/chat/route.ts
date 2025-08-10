@@ -109,24 +109,28 @@ export const POST = async (req: NextRequest) => {
     abortSignal: req.signal,
     onFinish: async ({ text: generatedText }) => {
       try {
-        await db.$transaction([
-          db.message.create({
-            data: {
-              text: messageText,
-              isUserMessage: true,
-              userId: user.id,
-              fileId,
-            },
-          }),
-          db.message.create({
-            data: {
-              text: generatedText,
-              isUserMessage: false,
-              fileId,
-              userId: user.id,
-            },
-          }),
-        ]);
+        // Create user message first
+        await db.message.create({
+          data: {
+            text: messageText,
+            isUserMessage: true,
+            userId: user.id,
+            fileId,
+          },
+        });
+
+        // Small delay to ensure different timestamps
+        await new Promise((resolve) => setTimeout(resolve, 1));
+
+        // Then create AI response
+        await db.message.create({
+          data: {
+            text: generatedText,
+            isUserMessage: false,
+            fileId,
+            userId: user.id,
+          },
+        });
       } catch (error) {
         console.error('Error in onFinish callback:', error);
       }

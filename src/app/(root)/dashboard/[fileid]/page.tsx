@@ -1,5 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
 import PdfRenderer from '@/components/PdfRenderer';
 import ChatComponent from '@/components/chat/ChatComponent';
@@ -15,6 +16,10 @@ const Page = async ({ params }: PageProps) => {
   const { fileid } = params;
 
   const user = await auth();
+
+  if (!user.userId) {
+    redirect('/sign-in');
+  }
 
   const file = await db.file.findFirst({
     where: {

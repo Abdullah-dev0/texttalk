@@ -13,9 +13,8 @@ const Providers = ({ children }: ProvidersProps) => {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 60 * 1000, // 1 minute
+            staleTime: 5 * 60 * 1000, // 5 minutes
             retry: (failureCount, error) => {
-              // Don't retry on 401/403 errors
               if (
                 error instanceof Error &&
                 error.message.includes('unauthorized')
