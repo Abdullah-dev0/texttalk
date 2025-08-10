@@ -13,7 +13,7 @@
     "check": "npx eslint \"src/**/*.{ts,tsx}\" --max-warnings=0 && npx prettier --check \"src/**/*.{ts,tsx,json,md}\"",
     "format:fix": "npx prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
     "postinstall": "prisma generate",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
     "@ai-sdk/mistral": "^2.0.1",
