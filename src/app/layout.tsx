@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { extractRouterConfig } from 'uploadthing/server';
 
 import { ourFileRouter } from '@/app/api/uploadthing/core';
+import { PostHogProvider } from '@/components/PostHogProvider';
 import Providers from '@/components/Providers';
 import 'simplebar-react/dist/simplebar.min.css';
 import './globals.css';
@@ -29,18 +30,20 @@ export default function RootLayout({
               inter.className
             )}
           >
-            <Toaster duration={3000} richColors />
-            <NextSSRPlugin
-              /**
-               * The `extractRouterConfig` will extract **only** the route configs
-               * from the router to prevent additional information from being
-               * leaked to the client. The data passed to the client is the same
-               * as if you were to fetch `/api/uploadthing` directly.
-               */
-              routerConfig={extractRouterConfig(ourFileRouter)}
-            />
-            {children}
-            <Analytics />
+            <PostHogProvider>
+              <Toaster duration={3000} richColors />
+              <NextSSRPlugin
+                /**
+                 * The `extractRouterConfig` will extract **only** the route configs
+                 * from the router to prevent additional information from being
+                 * leaked to the client. The data passed to the client is the same
+                 * as if you were to fetch `/api/uploadthing` directly.
+                 */
+                routerConfig={extractRouterConfig(ourFileRouter)}
+              />
+              {children}
+              <Analytics />
+            </PostHogProvider>
           </body>
         </Providers>
       </html>
