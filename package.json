@@ -7,12 +7,13 @@
     "dev": "next dev",
     "build": " npx prisma generate && next build",
     "start": "next start",
-    "lint": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0",
-    "lint:fix": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --fix",
-    "format": "npx prettier --check \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
-    "check": "npx eslint \"src/**/*.{ts,tsx,js,jsx}\" --max-warnings=0 && npx prettier --check \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
+    "lint": "npx eslint \"src/**/*.{ts,tsx}\" --max-warnings=0",
+    "lint:fix": "npx eslint \"src/**/*.{ts,tsx}\" --fix",
+    "format": "npx prettier --check \"src/**/*.{ts,tsx,json,md}\"",
+    "check": "npx eslint \"src/**/*.{ts,tsx}\" --max-warnings=0 && npx prettier --check \"src/**/*.{ts,tsx,json,md}\"",
     "format:fix": "npx prettier --write \"src/**/*.{ts,tsx,js,jsx,json,md}\"",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@ai-sdk/mistral": "^2.0.1",
