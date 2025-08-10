@@ -56,7 +56,6 @@ export function constructMetadata({
       shortcut: icons,
       apple: icons,
     },
-    themeColor: '#FFF',
     manifest: '/manifest.json',
     keywords: ['PDF chat', 'document analysis', 'AI chat', 'text analysis'],
     authors: [
