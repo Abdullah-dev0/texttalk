@@ -42,7 +42,6 @@ const ChatComponent = ({ file }: { file: File }) => {
     },
   });
 
-  // History
   const {
     data: historyData,
     status: historyStatus,
@@ -83,7 +82,10 @@ const ChatComponent = ({ file }: { file: File }) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) toast.error('Please enter a message');
+    if (!input.trim()) {
+      toast.error('Please enter a message');
+      return;
+    }
     sendMessage(
       { text: input },
       { body: { fileId: file.id, language: selectedLanguage } }
@@ -131,13 +133,19 @@ const ChatComponent = ({ file }: { file: File }) => {
                   fetchNextPage();
                 }}
                 disabled={isFetchingNextPage}
+                aria-busy={isFetchingNextPage}
+                title={
+                  isFetchingNextPage
+                    ? 'Loading older messages…'
+                    : 'Load older messages'
+                }
               >
                 {isFetchingNextPage ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading...
                   </>
                 ) : (
-                  `Load older messages  loaded)`
+                  'Load older messages'
                 )}
               </Button>
             </div>
