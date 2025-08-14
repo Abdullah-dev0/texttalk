@@ -4,7 +4,7 @@ import { useChat } from '@ai-sdk/react';
 import { useUser } from '@clerk/nextjs';
 import { File } from '@prisma/client';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { DefaultChatTransport, type UIMessage } from 'ai';
+import { DefaultChatTransport } from 'ai';
 import { ChevronLeft, Loader2, Send } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import {
   getMessages,
   type MessageDTO,
-  type MessagesChunk,
+  type MessagesPage,
 } from '@/actions/messages.action';
 
 import { Button, buttonVariants } from '../ui/button';
@@ -26,25 +26,23 @@ const ChatComponent = ({ file }: { file: File }) => {
   const [input, setInput] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('english');
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
   const { user } = useUser();
 
-  // Live chat with Vercel AI SDK
+  // Live chat
   const {
     messages: liveMessages,
     sendMessage,
-    status,
+    status: liveStatus,
     setMessages,
   } = useChat({
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-    }),
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
     onError: (error) => {
       toast.error(error.message || 'An error occurred');
       setMessages([]);
     },
   });
 
+  // History
   const {
     data: historyData,
     status: historyStatus,
@@ -53,62 +51,49 @@ const ChatComponent = ({ file }: { file: File }) => {
     hasNextPage,
     isFetchingNextPage,
     refetch: fetchOlder,
-  } = useInfiniteQuery<MessagesChunk>(
+  } = useInfiniteQuery(
     ['messages', file.id],
-    async ({ pageParam = undefined }) =>
-      await getMessages({
+    ({ pageParam }) =>
+      getMessages({
         fileId: file.id,
-        before: pageParam as string | undefined,
-        take: 10,
+        before: pageParam,
+        take: 6,
       }),
     {
-      getNextPageParam: (lastPage) =>
-        lastPage.hasMore ? lastPage.nextCursor : undefined,
+      getNextPageParam: (lastPage) => lastPage.cursor,
+      staleTime: 60 * 1000,
+      cacheTime: 5 * 60 * 1000,
     }
   );
 
-  // Auto scroll to bottom when new live message arrives
+  const historyFlat: MessageDTO[] = useMemo(() => {
+    if (!historyData?.pages) return [];
+    return historyData.pages
+      .flatMap((page: MessagesPage) => page.items)
+      .reverse();
+  }, [historyData]);
+
+  // Auto scroll when live messages change
   useEffect(() => {
     const timer = setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100); // slight delay to ensure DOM is painted
-
+    }, 100);
     return () => clearTimeout(timer);
-  }, [liveMessages, status]);
-
-  // Derived lists for simple rendering
-  const historyFlat: MessageDTO[] = useMemo(() => {
-    const pages = (historyData?.pages ?? []) as MessagesChunk[];
-    if (!pages.length) return [];
-    // Oldest first across pages
-    return [...pages].reverse().flatMap((p) => p.items);
-  }, [historyData]);
-
-  const combinedMessages: Array<MessageDTO | UIMessage> = useMemo(
-    () => [...historyFlat, ...liveMessages] as Array<MessageDTO | UIMessage>,
-    [historyFlat, liveMessages]
-  );
-
-  const historyIdSet = useMemo(
-    () => new Set(historyFlat.map((m) => m.id)),
-    [historyFlat]
-  );
+  }, [liveMessages, liveStatus]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (input.trim()) {
-      sendMessage(
-        { text: input },
-        { body: { fileId: file.id, language: selectedLanguage } }
-      );
-      setInput('');
-    }
+    if (!input.trim()) toast.error('Please enter a message');
+    sendMessage(
+      { text: input },
+      { body: { fileId: file.id, language: selectedLanguage } }
+    );
+    setInput('');
   };
 
-  // Early return for loading history
   if (isLoading) {
     return (
-      <div className="flex justify-center py-8 ">
+      <div className="flex justify-center py-8">
         <div className="flex items-center gap-3 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" />
           <span className="text-sm font-medium">Loading chat history...</span>
@@ -137,13 +122,14 @@ const ChatComponent = ({ file }: { file: File }) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="max-w-4xl mx-auto p-6 space-y-6">
-          {/* Load older messages */}
           {hasNextPage && (
             <div className="flex justify-center">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => fetchNextPage()}
+                onClick={() => {
+                  fetchNextPage();
+                }}
                 disabled={isFetchingNextPage}
               >
                 {isFetchingNextPage ? (
@@ -151,7 +137,7 @@ const ChatComponent = ({ file }: { file: File }) => {
                     <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading...
                   </>
                 ) : (
-                  'Load older messages'
+                  `Load older messages  loaded)`
                 )}
               </Button>
             </div>
@@ -172,17 +158,28 @@ const ChatComponent = ({ file }: { file: File }) => {
             </div>
           )}
 
-          {/* Combined messages */}
-          {combinedMessages.length > 0 ? (
-            combinedMessages.map((message) => (
-              <MessageItem
-                key={message.id}
-                message={message}
-                user={user || null}
-                isHistory={historyIdSet.has(message.id)}
-              />
-            ))
-          ) : (
+          {/* History Messages */}
+          {historyFlat.map((message) => (
+            <MessageItem
+              key={`history-${message.id}`}
+              message={message}
+              user={user || null}
+              isHistory
+            />
+          ))}
+
+          {/* Live Messages */}
+          {liveMessages.map((message, index) => (
+            <MessageItem
+              key={`live-${index}`}
+              message={message}
+              user={user || null}
+              isHistory={false}
+            />
+          ))}
+
+          {/* Empty state */}
+          {historyFlat.length === 0 && liveMessages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mb-4 shadow-lg">
                 💬
@@ -197,7 +194,7 @@ const ChatComponent = ({ file }: { file: File }) => {
           )}
 
           {/* Typing indicator */}
-          {status === 'submitted' && (
+          {liveStatus === 'submitted' && (
             <div className="flex gap-4 justify-start mt-6">
               <div className="shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-semibold shadow-md">
                 AI
@@ -229,16 +226,18 @@ const ChatComponent = ({ file }: { file: File }) => {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask about your PDF"
-              disabled={status === 'streaming' || status === 'submitted'}
+              disabled={
+                liveStatus === 'streaming' || liveStatus === 'submitted'
+              }
               className="flex-1 min-h-[80px] max-h-[200px] resize-none"
               rows={3}
             />
             <Button
               type="submit"
               disabled={
-                status === 'streaming' ||
+                liveStatus === 'streaming' ||
                 !input.trim() ||
-                status === 'submitted'
+                liveStatus === 'submitted'
               }
               className="shrink-0"
             >
