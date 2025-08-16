@@ -7,8 +7,8 @@ Built with the Next.js 14.0 App Router, tRPC, TypeScript, Prisma & Tailwind
 ## Features
 
 - 🛠️ Complete SaaS Built From Scratch
-- 💻 Beautiful Landing Page & Pricing Page Included ( comming soon ) 
-- 💳 Free & Pro Plan Using polar.sh ( comming soon )
+- 💻 Beautiful Landing Page & Pricing Page Included ( coming soon ) 
+- 💳 Free & Pro Plan Using polar.sh ( coming soon )
 - 📄 A Beautiful And Highly Functional PDF Viewer
 - 🔄 Streaming API Responses in Real-Time using Vercel Ai sdk
 - 🔒 Authentication Using clerk
