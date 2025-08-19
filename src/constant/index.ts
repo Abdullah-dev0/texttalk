@@ -1,4 +1,9 @@
-export const languages = [
+export interface Language {
+  id: number;
+  language: string;
+}
+
+export const languages: readonly Language[] = [
   {
     id: 1,
     language: 'urdu',
@@ -15,4 +20,4 @@ export const languages = [
     id: 4,
     language: 'french',
   },
-];
+] as const;

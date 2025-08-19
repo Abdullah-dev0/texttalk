@@ -3,7 +3,9 @@
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 
+import { avatarStyles, messageStyles } from '@/lib/styles';
 import { formatTime } from '@/lib/time-utils';
+import { cn } from '@/lib/utils';
 
 interface HistoryMessage {
   id: string;
@@ -64,18 +66,12 @@ const MessageItem = ({
     <div className={`flex gap-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
       {/* AI Avatar */}
       {!isUser && (
-        <div className="shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-semibold shadow-md">
+        <div className={avatarStyles.ai}>
           AI
         </div>
       )}
 
-      <div
-        className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
-          isUser
-            ? 'bg-blue-500 text-white'
-            : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
-        }`}
-      >
+      <div className={cn(isUser ? messageStyles.user : messageStyles.assistant)}>
         <div
           className={`text-sm ${isUser ? 'text-white' : 'text-foreground'}`}
         >
@@ -102,7 +98,7 @@ const MessageItem = ({
               className="w-10 h-10 rounded-full shadow-md object-cover"
             />
           ) : (
-            <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-teal-600 text-white rounded-full flex items-center justify-center text-lg font-semibold shadow-md">
+            <div className={avatarStyles.user}>
               {user?.firstName?.[0] ||
                 user?.emailAddresses?.[0]?.emailAddress[0]?.toUpperCase() ||
                 'U'}

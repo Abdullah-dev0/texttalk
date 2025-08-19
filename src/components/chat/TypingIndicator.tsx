@@ -1,7 +1,9 @@
+import { avatarStyles } from '@/lib/styles';
+
 export default function TypingIndicator() {
   return (
     <div className="flex gap-4 justify-start mt-6">
-      <div className="shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-semibold shadow-md">
+      <div className={avatarStyles.ai}>
         AI
       </div>
       <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 shadow-sm">
