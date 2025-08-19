@@ -1,83 +1,43 @@
 'use client';
 
-import { useChat } from '@ai-sdk/react';
 import { useUser } from '@clerk/nextjs';
-import { useInfiniteQuery } from '@tanstack/react-query';
-import { DefaultChatTransport } from 'ai';
-import { ChevronLeft, Loader2, Send } from 'lucide-react';
+import { ChevronLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 
-import {
-  getMessages,
-  type MessageDTO,
-  type MessagesPage,
-} from '@/actions/messages.action';
+import { useAutoScroll } from '@/lib/hooks/useAutoScroll';
+import { useChatHistory } from '@/lib/hooks/useChatHistory';
+import { useLiveChat } from '@/lib/hooks/useLiveChat';
 import type { File } from '@/types/database';
 
-import { Button, buttonVariants } from '../ui/button';
-import { Textarea } from '../ui/textarea';
+import { buttonVariants } from '../ui/button';
 
+import ChatInput from './ChatInput';
+import EmptyState from './EmptyState';
+import ErrorState from './ErrorState';
+import LoadOlderMessagesButton from './LoadOlderMessagesButton';
 import MessageItem from './MessageItem';
 import SelectLanguage from './SelectLanguage';
+import TypingIndicator from './TypingIndicator';
 
 const ChatComponent = ({ file }: { file: File }) => {
   const [input, setInput] = useState('');
   const [selectedLanguage, setSelectedLanguage] = useState('english');
-  const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useUser();
 
-  // Live chat
+  // Custom hooks
+  const { liveMessages, sendMessage, liveStatus } = useLiveChat();
   const {
-    messages: liveMessages,
-    sendMessage,
-    status: liveStatus,
-    setMessages,
-  } = useChat({
-    transport: new DefaultChatTransport({ api: '/api/chat' }),
-    onError: (error) => {
-      toast.error(error.message || 'An error occurred');
-      setMessages([]);
-    },
-  });
-
-  const {
-    data: historyData,
-    status: historyStatus,
+    historyFlat,
+    historyStatus,
     fetchNextPage,
     isLoading,
     hasNextPage,
     isFetchingNextPage,
-    refetch: fetchOlder,
-  } = useInfiniteQuery(
-    ['messages', file.id],
-    ({ pageParam }) =>
-      getMessages({
-        fileId: file.id,
-        before: pageParam,
-        take: 6,
-      }),
-    {
-      getNextPageParam: (lastPage) => lastPage.cursor,
-      staleTime: 60 * 1000,
-      cacheTime: 5 * 60 * 1000,
-    }
-  );
-
-  const historyFlat: MessageDTO[] = useMemo(() => {
-    if (!historyData?.pages) return [];
-    return historyData.pages
-      .flatMap((page: MessagesPage) => page.items)
-      .reverse();
-  }, [historyData]);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-    return () => clearTimeout(timer);
-  }, [liveMessages, liveStatus]);
+    fetchOlder,
+  } = useChatHistory(file.id);
+  const messagesEndRef = useAutoScroll(liveMessages, liveStatus);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -91,6 +51,8 @@ const ChatComponent = ({ file }: { file: File }) => {
     );
     setInput('');
   };
+
+  const isInputDisabled = liveStatus === 'streaming' || liveStatus === 'submitted';
 
   if (isLoading) {
     return (
@@ -123,47 +85,13 @@ const ChatComponent = ({ file }: { file: File }) => {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden">
         <div className="max-w-4xl mx-auto p-6 space-y-6">
-          {hasNextPage && (
-            <div className="flex justify-center">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  fetchNextPage();
-                }}
-                disabled={isFetchingNextPage}
-                aria-busy={isFetchingNextPage}
-                title={
-                  isFetchingNextPage
-                    ? 'Loading older messages…'
-                    : 'Load older messages'
-                }
-              >
-                {isFetchingNextPage ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" /> Loading...
-                  </>
-                ) : (
-                  'Load older messages'
-                )}
-              </Button>
-            </div>
-          )}
+          <LoadOlderMessagesButton
+            hasNextPage={hasNextPage ?? false}
+            isFetchingNextPage={isFetchingNextPage}
+            onLoadMore={fetchNextPage}
+          />
 
-          {/* Error */}
-          {historyStatus === 'error' && (
-            <div className="text-center text-red-500">
-              Failed to load history
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchOlder()}
-                className="ml-2"
-              >
-                Retry
-              </Button>
-            </div>
-          )}
+          {historyStatus === 'error' && <ErrorState onRetry={fetchOlder} />}
 
           {/* History Messages */}
           {historyFlat.map((message) => (
@@ -187,72 +115,22 @@ const ChatComponent = ({ file }: { file: File }) => {
 
           {/* Empty state */}
           {historyFlat.length === 0 && liveMessages.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mb-4 shadow-lg">
-                💬
-              </div>
-              <h3 className="text-xl font-semibold mb-2 text-foreground">
-                Ready to chat!
-              </h3>
-              <p className="text-muted-foreground max-w-sm">
-                Ask questions about your PDF in {selectedLanguage}.
-              </p>
-            </div>
+            <EmptyState selectedLanguage={selectedLanguage} />
           )}
 
           {/* Typing indicator */}
-          {liveStatus === 'submitted' && (
-            <div className="flex gap-4 justify-start mt-6">
-              <div className="shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-semibold shadow-md">
-                AI
-              </div>
-              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 shadow-sm">
-                <div className="flex items-center gap-1">
-                  <div className="flex space-x-1">
-                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                    <div className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" />
-                  </div>
-                  <span className="text-sm text-muted-foreground ml-2">
-                    AI is thinking...
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
+          {liveStatus === 'submitted' && <TypingIndicator />}
 
           <div ref={messagesEndRef} className="h-4" />
         </div>
       </div>
 
-      {/* Input */}
-      <div className="border-t bg-card p-4 shrink-0">
-        <div className="max-w-4xl mx-auto">
-          <form onSubmit={handleSubmit} className="flex gap-2 items-end">
-            <Textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask about your PDF"
-              disabled={
-                liveStatus === 'streaming' || liveStatus === 'submitted'
-              }
-              className="flex-1 min-h-[80px] max-h-[200px] resize-none"
-              rows={3}
-            />
-            <Button
-              type="submit"
-              disabled={
-                liveStatus === 'streaming' ||
-                !input.trim() ||
-                liveStatus === 'submitted'
-              }
-              className="shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </form>
-        </div>
-      </div>
+      <ChatInput
+        input={input}
+        onInputChange={setInput}
+        onSubmit={handleSubmit}
+        disabled={isInputDisabled}
+      />
     </div>
   );
 };

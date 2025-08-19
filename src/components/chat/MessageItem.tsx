@@ -70,16 +70,16 @@ const MessageItem = ({
       )}
 
       <div
-        className={`max-w-[75%] rounded-2xl px-4 shadow-sm ${
+        className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
           isUser
-            ? 'bg-blue-500 text-white py-2'
-            : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 py-3'
+            ? 'bg-blue-500 text-white'
+            : 'bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
         }`}
       >
         <div
-          className={`text-sm ${isUser ? 'text-white' : 'text-gray-900 dark:text-white'}`}
+          className={`text-sm ${isUser ? 'text-white' : 'text-foreground'}`}
         >
-          <ReactMarkdown className="prose prose-sm max-w-none">
+          <ReactMarkdown className="prose prose-sm max-w-none [&_*]:break-words [&_p]:mb-2 [&_p:last-child]:mb-0">
             {messageText}
           </ReactMarkdown>
         </div>
