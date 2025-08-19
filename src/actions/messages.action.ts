@@ -47,7 +47,7 @@ export async function getMessages({
   });
 
   return {
-    items: messages.map((m) => ({
+    items: messages.map((m: { id: string; text: string; isUserMessage: boolean; createdAt: Date; updatedAt: Date; userId: string; fileId: string }): MessageDTO => ({
       id: m.id,
       text: m.text,
       isUserMessage: m.isUserMessage,

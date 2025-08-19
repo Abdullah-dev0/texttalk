@@ -2,7 +2,6 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useUser } from '@clerk/nextjs';
-import { File } from '@prisma/client';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { DefaultChatTransport } from 'ai';
 import { ChevronLeft, Loader2, Send } from 'lucide-react';
@@ -15,12 +14,13 @@ import {
   type MessageDTO,
   type MessagesPage,
 } from '@/actions/messages.action';
+import type { File } from '@/types/database';
 
 import { Button, buttonVariants } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 
+import MessageItem from './MessageItem';
 import SelectLanguage from './SelectLanguage';
-import MessageItem from './messages/MessageItem';
 
 const ChatComponent = ({ file }: { file: File }) => {
   const [input, setInput] = useState('');

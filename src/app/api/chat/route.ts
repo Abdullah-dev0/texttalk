@@ -77,7 +77,7 @@ export const POST = async (req: NextRequest) => {
   const formattedPrevMessages = prevMessagesList
     .slice()
     .reverse()
-    .map((msg) => ({
+    .map((msg: { isUserMessage: boolean; text: string }) => ({
       role: msg.isUserMessage ? ('user' as const) : ('assistant' as const),
       content: msg.text,
     }));
@@ -90,7 +90,7 @@ export const POST = async (req: NextRequest) => {
     .join('\n\n');
 
   const chatHistory = formattedPrevMessages
-    .map((message) => {
+    .map((message: { role: 'user' | 'assistant'; content: string }) => {
       if (message.role === 'user') return `User: ${message.content}\n`;
       return `Assistant: ${message.content}\n`;
     })
