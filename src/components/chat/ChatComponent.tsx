@@ -72,7 +72,6 @@ const ChatComponent = ({ file }: { file: File }) => {
       .reverse();
   }, [historyData]);
 
-  // Auto scroll when live messages change
   useEffect(() => {
     const timer = setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
