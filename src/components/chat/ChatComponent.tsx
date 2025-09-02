@@ -60,8 +60,8 @@ const ChatComponent = ({ file }: { file: File }) => {
       }),
     {
       getNextPageParam: (lastPage) => lastPage.cursor,
-      staleTime: 60 * 1000,
-      cacheTime: 5 * 60 * 1000,
+      staleTime: Infinity,
+      cacheTime: Infinity,
     }
   );
 

@@ -2,21 +2,16 @@
 
 import {
   SignedIn,
-  SignedOut,
-  SignInButton,
-  UserButton,
-  useUser,
+  useAuth,
+  UserButton
 } from '@clerk/nextjs';
-import { ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
 import MaxWidthWrapper from './MaxWidthWrapper';
 import MobileNav from './MobileNav';
-import { Button, buttonVariants } from './ui/button';
-import { Skeleton } from './ui/skeleton';
 
 const Navbar = () => {
-  const { user, isLoaded } = useUser();
+  const { sessionId } = useAuth();
 
   return (
     <nav className="sticky h-14 inset-x-0 top-0 z-30 w-full border-b border-gray-200 bg-white/75 backdrop-blur-lg transition-all">
@@ -26,42 +21,11 @@ const Navbar = () => {
             <span className="text-lg">TextTalk</span>
           </Link>
 
-          <MobileNav isAuth={!!user} />
+          <MobileNav isAuth={!!sessionId} />
 
-          <div className="hidden items-center space-x-4 sm:flex">
-            {!isLoaded ? (
-              <>
-                <Skeleton className="h-9 w-20 bg-zinc-300" />
-                <Skeleton className="h-10 w-32 bg-zinc-300" />
-              </>
-            ) : (
-              <>
-                <SignedOut>
-                  <SignInButton>
-                    <Button size="sm">Sign in</Button>
-                  </SignInButton>
-                  <SignInButton>
-                    <Button>
-                      Get started <ArrowRight className="ml-1.5 h-5 w-5" />
-                    </Button>
-                  </SignInButton>
-                </SignedOut>
-
-                <SignedIn>
-                  <Link
-                    href="/dashboard"
-                    className={buttonVariants({
-                      variant: 'ghost',
-                      size: 'sm',
-                    })}
-                  >
-                    Dashboard
-                  </Link>
-                  <UserButton />
-                </SignedIn>
-              </>
-            )}
-          </div>
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
         </div>
       </MaxWidthWrapper>
     </nav>
