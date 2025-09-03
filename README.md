@@ -7,18 +7,16 @@ Built with the Next.js 14.0 App Router, tRPC, TypeScript, Prisma & Tailwind
 ## Features
 
 - 🛠️ Complete SaaS Built From Scratch
-- 💻 Beautiful Landing Page & Pricing Page Included
-- 💳 Free & Pro Plan Using Stripe
+- 💻 Beautiful Landing Page & Pricing Page Included ( coming soon ) 
+- 💳 Free & Pro Plan Using polar.sh ( coming soon )
 - 📄 A Beautiful And Highly Functional PDF Viewer
 - 🔄 Streaming API Responses in Real-Time using Vercel Ai sdk
 - 🔒 Authentication Using clerk
 - 🎨 Clean, Modern UI Using 'shadcn-ui'
 - 🚀 Optimistic UI Updates for a Great UX
-- ⚡ Infinite Message Loading for Performance
 - 📤 Intuitive Drag n’ Drop Uploads
 - ✨ Instant Loading States
-- 🔧 Modern Data Fetching Using tRPC & Zod
-- 🧠 Vercel Ai sdk for Infinite AI Memory
+- 🧠 Vercel Ai sdk
 - 🌲 Pinecone as our Vector Storage
 - 📊 Prisma as our ORM
 - 🔤 100% written in TypeScript

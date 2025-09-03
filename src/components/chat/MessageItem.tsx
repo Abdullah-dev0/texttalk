@@ -43,11 +43,6 @@ const MessageItem = ({
     ? message.isUserMessage
     : message.role === 'user';
 
-  // Skip system messages
-  if (!isHistoryMessage(message) && message.role === 'system') {
-    return null;
-  }
-
   const messageText = isHistoryMessage(message)
     ? message.text
     : Array.isArray(message.parts)
