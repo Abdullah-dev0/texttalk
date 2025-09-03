@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  SignedIn,
-  useAuth,
-  UserButton
-} from '@clerk/nextjs';
+import { SignedIn, useAuth, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 
 import MaxWidthWrapper from './MaxWidthWrapper';
