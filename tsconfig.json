@@ -1,17 +1,19 @@
 {
   "compilerOptions": {
-    "lib": ["ESNext", "DOM"],
-    "module": "commonjs",
-    "target": "ES6",
-    "strict": true,
-    "esModuleInterop": true,
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
     "skipLibCheck": true,
+    "strict": true,
     "forceConsistentCasingInFileNames": true,
-    "strictNullChecks": true,
-    "allowSyntheticDefaultImports": true,
-    "noImplicitReturns": true,
-    "noImplicitAny": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
     "plugins": [
       {
         "name": "next"
@@ -19,20 +21,8 @@
     ],
     "paths": {
       "@/*": ["./src/*"]
-    },
-    "allowJs": true,
-    "noEmit": true,
-    "incremental": true,
-    "moduleResolution": "node16",
-    "isolatedModules": true,
-    "jsx": "preserve"
+    }
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "src/actions/relatedpdf.ts"
-  ],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
