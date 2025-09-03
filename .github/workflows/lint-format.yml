@@ -1,8 +1,6 @@
 name: "Lint & Format"
 
 on:
-  push:
-    branches-ignore: [ main ]
   pull_request:
     branches: [ main ]
 
