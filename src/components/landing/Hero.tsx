@@ -2,7 +2,6 @@ import { ArrowRight } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-import MaxWidthWrapper from '@/components/MaxWidthWrapper';
 import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -14,7 +13,7 @@ const Hero = () => {
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_hsl(var(--primary)/0.08),_transparent_60%)]" />
         <div className="absolute -top-40 left-1/2 size-[700px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
       </div>
-      <MaxWidthWrapper className="relative flex flex-col items-center text-center pt-28 sm:pt-40">
+      <div className="relative flex flex-col items-center text-center pt-28 sm:pt-40">
         <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-background/60 px-5 py-1.5 text-xs font-medium backdrop-blur supports-[backdrop-filter]:bg-background/40 ring-1 ring-border">
           <span
             className="inline-flex size-2 animate-pulse rounded-full bg-primary"
@@ -69,7 +68,7 @@ const Hero = () => {
             />
           </div>
         </div>
-      </MaxWidthWrapper>
+      </div>
     </section>
   );
 };

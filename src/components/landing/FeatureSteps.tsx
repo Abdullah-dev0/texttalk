@@ -1,7 +1,3 @@
-import Link from 'next/link';
-
-import MaxWidthWrapper from '@/components/MaxWidthWrapper';
-
 const steps = [
   {
     title: 'Create your account',
@@ -25,7 +21,7 @@ const steps = [
 const FeatureSteps = () => {
   return (
     <section id="how-it-works" className="scroll-mt-24">
-      <MaxWidthWrapper className="mt-40 sm:mt-56">
+      <div className="mt-40 sm:mt-56">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
             Start chatting in minutes
@@ -35,7 +31,7 @@ const FeatureSteps = () => {
           </p>
         </div>
 
-        <ol className="mt-16 space-y-8 md:grid md:grid-cols-3 md:gap-10 md:space-y-0">
+        <ol className="grid grid-cols-1 gap-5 lg:grid-cols-3 mt-8 justify-center">
           {steps.map((s, i) => (
             <li key={s.title} className="relative flex flex-col">
               <div className="mb-4 inline-flex size-10 items-center justify-center rounded-full border bg-background text-sm font-semibold ring-1 ring-border">
@@ -48,16 +44,7 @@ const FeatureSteps = () => {
             </li>
           ))}
         </ol>
-        <p className="mt-10 text-center text-sm text-muted-foreground">
-          Need bigger volumes?{' '}
-          <Link
-            href="/contact"
-            className="text-primary underline-offset-4 hover:underline"
-          >
-            Contact sales
-          </Link>
-        </p>
-      </MaxWidthWrapper>
+      </div>
     </section>
   );
 };

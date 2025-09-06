@@ -1,7 +1,5 @@
 import Link from 'next/link';
 
-import MaxWidthWrapper from '@/components/MaxWidthWrapper';
-
 const year = new Date().getFullYear();
 
 const links = [
@@ -13,7 +11,7 @@ const links = [
 const Footer = () => {
   return (
     <footer className="mt-32 border-t bg-background/60 backdrop-blur supports-[backdrop-filter]:bg-background/40">
-      <MaxWidthWrapper className="py-10">
+      <div className="py-10">
         <div className="flex flex-col items-center justify-between gap-6 text-center text-sm text-muted-foreground md:flex-row md:text-left">
           <p>&copy; {year} TextTalk. All rights reserved.</p>
           <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
@@ -36,7 +34,7 @@ const Footer = () => {
             </a>
           </nav>
         </div>
-      </MaxWidthWrapper>
+      </div>
     </footer>
   );
 };
