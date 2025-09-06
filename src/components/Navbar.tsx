@@ -1,29 +1,28 @@
 'use client';
 
-import { SignedIn, useAuth, UserButton } from '@clerk/nextjs';
+import { SignedIn, UserButton, SignedOut } from '@clerk/nextjs';
 import Link from 'next/link';
 
-import MaxWidthWrapper from './MaxWidthWrapper';
-import MobileNav from './MobileNav';
+import { Button } from './ui/button';
 
 const Navbar = () => {
-  const { sessionId } = useAuth();
-
   return (
-    <nav className="sticky h-14 inset-x-0 top-0 z-30 w-full border-b border-gray-200 bg-white/75 backdrop-blur-lg transition-all">
-      <MaxWidthWrapper>
-        <div className="flex h-14 items-center justify-between border-b border-zinc-200">
-          <Link href="/" className="flex z-40 font-semibold">
-            <span className="text-lg">TextTalk</span>
+    <nav className="sticky h-14 inset-x-0 top-0 z-30 w-full max-w-6xl mx-auto">
+      <div className="flex h-14 items-center justify-between  border-zinc-200">
+        <Link href="/" className="flex z-40 font-semibold">
+          <span className="text-lg">TextTalk</span>
+        </Link>
+
+        <SignedIn>
+          <UserButton />
+        </SignedIn>
+
+        <SignedOut>
+          <Link href="/sign-in">
+            <Button className="cursor-pointer">Login</Button>
           </Link>
-
-          <MobileNav isAuth={!!sessionId} />
-
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
-        </div>
-      </MaxWidthWrapper>
+        </SignedOut>
+      </div>
     </nav>
   );
 };
