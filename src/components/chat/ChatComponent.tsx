@@ -20,7 +20,7 @@ import { Button, buttonVariants } from '../ui/button';
 import { Textarea } from '../ui/textarea';
 
 import SelectLanguage from './SelectLanguage';
-import MessageItem from './messages/MessageItem';
+import { MessageItem } from './messages';
 
 const ChatComponent = ({ file }: { file: File }) => {
   const [input, setInput] = useState('');
@@ -60,8 +60,8 @@ const ChatComponent = ({ file }: { file: File }) => {
       }),
     {
       getNextPageParam: (lastPage) => lastPage.cursor,
-      staleTime: 60 * 1000,
-      cacheTime: 5 * 60 * 1000,
+      staleTime: Infinity,
+      cacheTime: Infinity,
     }
   );
 
@@ -232,6 +232,12 @@ const ChatComponent = ({ file }: { file: File }) => {
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSubmit(e);
+                }
+              }}
               placeholder="Ask about your PDF"
               disabled={
                 liveStatus === 'streaming' || liveStatus === 'submitted'

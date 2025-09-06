@@ -47,11 +47,11 @@ const Page = async ({ params }: PageProps) => {
     );
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden">
-      <div className="mx-auto flex h-full w-full max-w-8xl lg:flex xl:px-4">
+    <div className="h-[calc(100vh-3.5rem)] ">
+      <div className="mx-auto h-full w-full grid grid-cols-1 lg:grid-cols-2 gap-6 lg:overflow-hidden">
         {/* PDF Column */}
         <div className="flex-1 xl:flex overflow-hidden">
-          <div className="flex-1 px-4 py-6 sm:px-6 lg:pl-8 xl:pl-6 overflow-hidden">
+          <div className="flex-1  overflow-hidden">
             <PdfRenderer url={file.url} />
           </div>
         </div>

@@ -1,29 +1,17 @@
+// app/providers.tsx
 'use client';
 
-import posthogClient from 'posthog-js';
+import { posthog as posthogjs } from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { useEffect } from 'react';
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  const isProd = process.env.NODE_ENV === 'production';
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-
-    if (!isProd) {
-      posthogClient.opt_out_capturing?.();
-      return;
-    }
-
-    if (!key) return;
-
-    posthogClient.init(key, {
-      api_host: '/ingest',
-      ui_host: 'https://us.posthog.com',
-      capture_exceptions: true, // Enable PostHog error tracking
-      debug: false,
+    posthogjs.init(process.env.NEXT_PUBLIC_POSTHOG_KEY!, {
+      api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+      defaults: '2025-05-24',
     });
-  }, [isProd]);
+  }, []);
 
-  if (!isProd) return <>{children}</>;
-  return <PHProvider client={posthogClient}>{children}</PHProvider>;
+  return <PHProvider client={posthogjs}>{children}</PHProvider>;
 }
