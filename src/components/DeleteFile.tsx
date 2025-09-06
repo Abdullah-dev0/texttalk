@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 
 import { deleteFile } from '@/actions/files.action';
-import { cn } from '@/lib/utils';
 
 import { Button } from './ui/button';
 
@@ -21,10 +20,9 @@ interface FileType {
 
 type DeleteFileProps = {
   id: string;
-  className?: string;
 };
 
-export default function DeleteFile({ id, className }: DeleteFileProps) {
+export default function DeleteFile({ id }: DeleteFileProps) {
   const [currentlyDeletingFile, setCurrentlyDeletingFile] = useState<
     string | null
   >(null);
@@ -44,7 +42,6 @@ export default function DeleteFile({ id, className }: DeleteFileProps) {
           return oldFiles.filter((file) => file.id !== id);
         }
       );
-      toast.success('File deleted successfully');
     },
     onMutate: async () => {
       setCurrentlyDeletingFile(id);
@@ -88,13 +85,13 @@ export default function DeleteFile({ id, className }: DeleteFileProps) {
       onClick={handleDeleteFile}
       size="sm"
       disabled={deleteFileMutation.isPending}
-      className={cn('w-full', className)}
+      className="w-full cursor-pointer bg-transparent text-red-600 hover:bg-red-50"
       variant="destructive"
     >
       {currentlyDeletingFile === id ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <Trash className="h-4 w-4" />
+        <Trash className="h-4 w-4" color="red" />
       )}
     </Button>
   );
