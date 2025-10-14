@@ -29,6 +29,7 @@ export async function getMessages({
   take?: number;
 }): Promise<MessagesPage> {
   const { userId } = await auth();
+
   if (!userId) throw new Error('Unauthorized');
 
   // Ensure user owns this file

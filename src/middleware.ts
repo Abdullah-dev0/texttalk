@@ -18,8 +18,6 @@ export default clerkMiddleware(async (auth, request) => {
   }
 
   const user = await auth();
-  const url = request.nextUrl.clone();
-  url.pathname = '/dashboard';
 
   if (user.userId && request.nextUrl.pathname === '/') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
