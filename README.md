@@ -69,10 +69,6 @@ npm install
    # Pinecone for vector storage - https://www.pinecone.io/
    PINECONE_API_KEY=
 
-   # Google Search API (optional) - https://console.cloud.google.com/
-   GOOGLE_SEARCH_API_KEY=
-   GOOGLE_SEARCH_CX=
-
    # Upstash Redis (optional) - https://upstash.com/
    UPSTASH_REDIS_REST_URL=
    UPSTASH_REDIS_REST_TOKEN=
@@ -87,7 +83,7 @@ npm install
 
    **Required Services:**
    - **Clerk** - Authentication ([Get started](https://clerk.dev))
-   - **Database** - PostgreSQL/MySQL connection (PlanetScale recommended)
+   - **Database** - MongoDb
    - **Uploadthing** - PDF file storage ([Get started](https://uploadthing.com/dashboard))
    - **Mistral API** - AI for answering PDF questions ([Get API key](https://console.mistral.ai/))
    - **Pinecone** - Vector database for embeddings ([Get started](https://www.pinecone.io/))
