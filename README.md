@@ -2,12 +2,10 @@
 
 Built with the Next.js 14.0 App Router, tRPC, TypeScript, Prisma & Tailwind
 
-
-
 ## Features
 
 - 🛠️ Complete SaaS Built From Scratch
-- 💻 Beautiful Landing Page & Pricing Page Included ( coming soon ) 
+- 💻 Beautiful Landing Page & Pricing Page Included ( coming soon )
 - 💳 Free & Pro Plan Using polar.sh ( coming soon )
 - 📄 A Beautiful And Highly Functional PDF Viewer
 - 🔄 Streaming API Responses in Real-Time using Vercel Ai sdk
@@ -21,7 +19,6 @@ Built with the Next.js 14.0 App Router, tRPC, TypeScript, Prisma & Tailwind
 - 📊 Prisma as our ORM
 - 🔤 100% written in TypeScript
 - 🎁 ...much more
-
 
 ## Getting Started
 
@@ -48,37 +45,56 @@ npm install
 
 2. Fill in the required environment variables in the `.env` file:
 
-   - **Clerk** for secure authentication (see [Clerk documentation](https://clerk.dev))
-     ```plaintext
-     NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-     CLERK_SECRET_KEY=
-     NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
-     NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
-     NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/dashboard
-     NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/dashboard
-     ```
+   ```plaintext
+   # Clerk for secure, fast authentication - https://clerk.dev
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
+   CLERK_SECRET_KEY=
+   NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
+   NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
+   NEXT_PUBLIC_CLERK_SIGN_IN_FORCE_REDIRECT_URL=/dashboard
+   NEXT_PUBLIC_CLERK_SIGN_UP_FORCE_REDIRECT_URL=/dashboard
+   WEBHOOK_SECRET=
 
-   - **Database** MongoDB connection (replace <your-mongodb-uri> with your MongoDB connection URI)
-     ```plaintext
-     DATABASE_URL=
-     ```
+   # Database for storing everything except PDF files - (Provider up to you, I like PlanetScale)
+   DATABASE_URL=
 
-   - **Uploadthing** for PDF storage (see [Uploadthing documentation](https://uploadthing.com/dashboard))
-     ```plaintext
-     UPLOADTHING_SECRET=
-     UPLOADTHING_APP_ID=
-     UPLOADTHING_TOKEN=
-     ```
+   # Uploadthing for storing PDF files - https://uploadthing.com/dashboard
+   UPLOADTHING_SECRET=
+   UPLOADTHING_APP_ID=
+   UPLOADTHING_TOKEN=
 
-   - **OpenAI** or **Mistral API** for answering questions from PDFs (see [OpenAI](https://platform.openai.com/))
-     ```plaintext
-     OPENAI_API_KEY=
-     ```
+   # Mistral API for answering PDF questions - https://console.mistral.ai/
+   MISTRAL_API_KEY=
 
-   - **Pinecone** for vector storage
-     ```plaintext
-     PINECONE_API_KEY=
-     ```
+   # Pinecone for vector storage - https://www.pinecone.io/
+   PINECONE_API_KEY=
+
+   # Google Search API (optional) - https://console.cloud.google.com/
+   GOOGLE_SEARCH_API_KEY=
+   GOOGLE_SEARCH_CX=
+
+   # Upstash Redis (optional) - https://upstash.com/
+   UPSTASH_REDIS_REST_URL=
+   UPSTASH_REDIS_REST_TOKEN=
+
+   # PostHog Analytics (optional) - https://posthog.com/
+   NEXT_PUBLIC_POSTHOG_KEY=
+   NEXT_PUBLIC_POSTHOG_HOST=
+
+   # Environment
+   NODE_ENV=development
+   ```
+
+   **Required Services:**
+   - **Clerk** - Authentication ([Get started](https://clerk.dev))
+   - **Database** - PostgreSQL/MySQL connection (PlanetScale recommended)
+   - **Uploadthing** - PDF file storage ([Get started](https://uploadthing.com/dashboard))
+   - **Mistral API** - AI for answering PDF questions ([Get API key](https://console.mistral.ai/))
+   - **Pinecone** - Vector database for embeddings ([Get started](https://www.pinecone.io/))
+   - **Upstash Redis** - For caching and rate limiting
+
+   **Optional Services:**
+   - **PostHog** - For analytics and user tracking
 
 ### 4. Start the development server
 
@@ -93,6 +109,3 @@ npm run dev
 Open your browser and navigate to `http://localhost:3000` to view the application.
 
 ---
-
-
-
