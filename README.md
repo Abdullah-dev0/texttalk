@@ -73,10 +73,6 @@ npm install
    UPSTASH_REDIS_REST_URL=
    UPSTASH_REDIS_REST_TOKEN=
 
-   # PostHog Analytics (optional) - https://posthog.com/
-   NEXT_PUBLIC_POSTHOG_KEY=
-   NEXT_PUBLIC_POSTHOG_HOST=
-
    # Environment
    NODE_ENV=development
    ```
@@ -88,9 +84,6 @@ npm install
    - **Mistral API** - AI for answering PDF questions ([Get API key](https://console.mistral.ai/))
    - **Pinecone** - Vector database for embeddings ([Get started](https://www.pinecone.io/))
    - **Upstash Redis** - For caching and rate limiting
-
-   **Optional Services:**
-   - **PostHog** - For analytics and user tracking
 
 ### 4. Start the development server
 
