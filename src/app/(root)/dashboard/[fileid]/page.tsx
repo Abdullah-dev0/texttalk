@@ -18,7 +18,8 @@ const Page = async ({ params }: PageProps) => {
   const user = await auth();
 
   if (!user.userId) {
-    redirect('/sign-in');
+    const signInUrl = `/sign-in?redirect_url=${encodeURIComponent(`/dashboard/${fileid}`)}`;
+    redirect(signInUrl);
   }
 
   const file = await db.file.findFirst({
