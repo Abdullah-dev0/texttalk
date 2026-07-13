@@ -32,7 +32,7 @@ export function constructMetadata({
       title,
       description,
       type: 'website',
-      url: 'https://texttalk.techonline.live',
+      url: 'https://texttalk.abdullahtech.me',
       images: [
         {
           url: image,
