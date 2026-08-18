@@ -37,7 +37,7 @@ interface PdfRendererProps {
 }
 
 const PdfRenderer = ({ url }: PdfRendererProps) => {
-  const [numPages, setNumPages] = useState<number>();
+  const [numPages, setNumPages] = useState<number | null>(null);
   const [currPage, setCurrPage] = useState<number>(1);
   const [scale, setScale] = useState<number>(1);
   const [rotation, setRotation] = useState<number>(0);
@@ -72,23 +72,39 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
     setValue('page', String(page));
   };
 
+  const changePage = (offset: number) => {
+    setCurrPage((currentPage) => {
+      const nextPage = Math.min(
+        Math.max(currentPage + offset, 1),
+        numPages ?? 1
+      );
+      setValue('page', String(nextPage));
+      return nextPage;
+    });
+  };
+
   return (
     <div className="w-full max-w-4xl mx-auto bg-white rounded-md shadow-sm flex flex-col items-center">
       <div className="h-14 w-full border-b border-zinc-200 flex items-center justify-between px-2">
         <div className="flex items-center gap-1.5">
           <Button
             disabled={currPage <= 1}
-            onClick={() => {
-              setCurrPage((prev) => (prev - 1 > 1 ? prev - 1 : 1));
-              setValue('page', String(currPage - 1));
-            }}
+            onClick={() => changePage(-1)}
             variant="ghost"
             aria-label="previous page"
           >
             <ChevronDown className="h-4 w-4" />
           </Button>
 
-          <div className="flex items-center gap-1.5">
+          <div
+            className="flex items-center gap-1.5"
+            aria-label={
+              numPages
+                ? `Page ${currPage} of ${numPages}`
+                : `Page ${currPage}; total pages loading`
+            }
+          >
+            <span className="text-sm text-zinc-700">Page</span>
             <Input
               {...register('page')}
               className={cn(
@@ -101,20 +117,17 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                 }
               }}
             />
-            <p className="text-zinc-700 text-sm space-x-1">
-              <span>/</span>
-              <span>{numPages ?? 'x'}</span>
+            <p className="text-zinc-700 text-sm whitespace-nowrap">
+              of{' '}
+              <span aria-live="polite" className="font-medium tabular-nums">
+                {numPages ?? '…'}
+              </span>
             </p>
           </div>
 
           <Button
-            disabled={numPages === undefined || currPage === numPages}
-            onClick={() => {
-              setCurrPage((prev) =>
-                prev + 1 > numPages! ? numPages! : prev + 1
-              );
-              setValue('page', String(currPage + 1));
-            }}
+            disabled={numPages === null || currPage >= numPages}
+            onClick={() => changePage(1)}
             variant="ghost"
             aria-label="next page"
           >
@@ -155,7 +168,7 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
             <RotateCw className="h-4 w-4" />
           </Button>
 
-          <PdfFullscreen fileUrl={url} />
+          <PdfFullscreen fileUrl={url} pageCount={numPages} />
         </div>
       </div>
 
@@ -173,7 +186,14 @@ const PdfRenderer = ({ url }: PdfRendererProps) => {
                   description: message,
                 });
               }}
-              onLoadSuccess={({ numPages }) => setNumPages(numPages)}
+              onLoadSuccess={({ numPages: loadedPageCount }) => {
+                setNumPages(loadedPageCount);
+                setCurrPage((currentPage) => {
+                  const validPage = Math.min(currentPage, loadedPageCount);
+                  setValue('page', String(validPage));
+                  return validPage;
+                });
+              }}
               file={url}
               className="max-h-full"
             >

@@ -14,13 +14,6 @@ const Hero = () => {
         <div className="absolute -top-40 left-1/2 size-[700px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
       </div>
       <div className="relative flex flex-col items-center text-center pt-28 sm:pt-40">
-        <div className="mb-6 inline-flex items-center gap-2 rounded-full border bg-background/60 px-5 py-1.5 text-xs font-medium backdrop-blur supports-[backdrop-filter]:bg-background/40 ring-1 ring-border">
-          <span
-            className="inline-flex size-2 animate-pulse rounded-full bg-primary"
-            aria-hidden
-          />
-          <span>Public Beta is live</span>
-        </div>
         <h1 className="font-bold tracking-tight text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl">
           Chat with your{' '}
           <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">

@@ -1,6 +1,6 @@
 # TextTalk - A Modern Fullstack Platform
 
-Built with the Next.js 14.0 App Router, tRPC, TypeScript, Prisma & Tailwind
+Built with the Next.js 16 App Router, React 19, TypeScript, Prisma & Tailwind CSS 4.
 
 ## Features
 
@@ -33,7 +33,7 @@ cd texttalk
 
 ### 2. Install dependencies
 
-Make sure you have all the dependencies installed by running:
+Install Node.js 24 or newer, then install the dependencies:
 
 ```bash
 npm install
