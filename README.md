@@ -77,6 +77,11 @@ npm install
    NODE_ENV=development
    ```
 
+   Local development should use Clerk development credentials (`pk_test_` and
+   `sk_test_`). Before deploying, replace them in the hosting provider with the
+   production instance credentials (`pk_live_` and `sk_live_`); Clerk warns when
+   development credentials are used because those instances have strict limits.
+
    **Required Services:**
    - **Clerk** - Authentication ([Get started](https://clerk.dev))
    - **Database** - MongoDb

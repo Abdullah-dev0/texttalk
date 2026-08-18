@@ -1,29 +1,7 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { clerkMiddleware } from '@clerk/nextjs/server';
 
-// By default, all routes are protected.
-const isPublicRoute = createRouteMatcher([
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-  '/',
-  '/api/webhooks(.*)',
-  '/maintenance',
-  '/api/uploadthing(.*)',
-]);
-
-export default clerkMiddleware(async (auth, request) => {
-  if (!isPublicRoute(request)) {
-    await auth.protect();
-  }
-
-  const user = await auth();
-
-  if (user.userId && request.nextUrl.pathname === '/') {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
-  }
-
-  return NextResponse.next();
-});
+// Authentication and authorization are enforced by each protected resource.
+export default clerkMiddleware();
 
 export const config = {
   matcher: [
