@@ -10,9 +10,10 @@ import { Dialog, DialogContent, DialogTrigger } from './ui/dialog';
 
 interface PdfFullscreenProps {
   fileUrl: string;
+  pageCount: number | null;
 }
 
-const PdfFullscreen = ({ fileUrl }: PdfFullscreenProps) => {
+const PdfFullscreen = ({ fileUrl, pageCount }: PdfFullscreenProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [numPages, setNumPages] = useState<number>();
   const { width, ref } = useResizeDetector();
@@ -32,6 +33,9 @@ const PdfFullscreen = ({ fileUrl }: PdfFullscreenProps) => {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-7xl w-full">
+        <div className="absolute left-6 top-5 text-sm text-muted-foreground">
+          {pageCount ? `${pageCount} pages` : 'Loading page count…'}
+        </div>
         <SimpleBar autoHide={false} className="max-h-[calc(100vh-10rem)] mt-6">
           <div ref={ref}>
             <Document

@@ -1,6 +1,6 @@
 # TextTalk - A Modern Fullstack Platform
 
-Built with the Next.js 14.0 App Router, tRPC, TypeScript, Prisma & Tailwind
+Built with the Next.js 16 App Router, React 19, TypeScript, Prisma & Tailwind CSS 4.
 
 ## Features
 
@@ -33,7 +33,7 @@ cd texttalk
 
 ### 2. Install dependencies
 
-Make sure you have all the dependencies installed by running:
+Install Node.js 24 or newer, then install the dependencies:
 
 ```bash
 npm install
@@ -76,6 +76,11 @@ npm install
    # Environment
    NODE_ENV=development
    ```
+
+   Local development should use Clerk development credentials (`pk_test_` and
+   `sk_test_`). Before deploying, replace them in the hosting provider with the
+   production instance credentials (`pk_live_` and `sk_live_`); Clerk warns when
+   development credentials are used because those instances have strict limits.
 
    **Required Services:**
    - **Clerk** - Authentication ([Get started](https://clerk.dev))

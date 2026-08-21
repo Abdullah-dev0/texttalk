@@ -74,9 +74,9 @@ const MessageItem = ({
         <div
           className={`text-sm ${isUser ? 'text-white' : 'text-gray-900 dark:text-white'}`}
         >
-          <ReactMarkdown className="prose prose-sm max-w-none">
-            {messageText}
-          </ReactMarkdown>
+          <div className="prose prose-sm max-w-none">
+            <ReactMarkdown>{messageText}</ReactMarkdown>
+          </div>
         </div>
         <div className="text-xs mt-2 opacity-70 text-muted-foreground">
           {isHistory && isHistoryMessage(message)

@@ -50,20 +50,19 @@ const ChatComponent = ({ file }: { file: File }) => {
     hasNextPage,
     isFetchingNextPage,
     refetch: fetchOlder,
-  } = useInfiniteQuery(
-    ['messages', file.id],
-    ({ pageParam }) =>
+  } = useInfiniteQuery({
+    queryKey: ['messages', file.id],
+    queryFn: ({ pageParam }) =>
       getMessages({
         fileId: file.id,
-        before: pageParam,
+        before: pageParam ?? undefined,
         take: 6,
       }),
-    {
-      getNextPageParam: (lastPage) => lastPage.cursor,
-      staleTime: Infinity,
-      cacheTime: Infinity,
-    }
-  );
+    initialPageParam: null as string | null,
+    getNextPageParam: (lastPage) => lastPage.cursor ?? null,
+    staleTime: Infinity,
+    gcTime: Infinity,
+  });
 
   const historyFlat: MessageDTO[] = useMemo(() => {
     if (!historyData?.pages) return [];
@@ -188,7 +187,7 @@ const ChatComponent = ({ file }: { file: File }) => {
           {/* Empty state */}
           {historyFlat.length === 0 && liveMessages.length === 0 && (
             <div className="flex flex-col items-center justify-center py-16 text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mb-4 shadow-lg">
+              <div className="w-16 h-16 bg-linear-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-2xl font-bold mb-4 shadow-lg">
                 💬
               </div>
               <h3 className="text-xl font-semibold mb-2 text-foreground">
@@ -203,7 +202,7 @@ const ChatComponent = ({ file }: { file: File }) => {
           {/* Typing indicator */}
           {liveStatus === 'submitted' && (
             <div className="flex gap-4 justify-start mt-6">
-              <div className="shrink-0 w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-semibold shadow-md">
+              <div className="shrink-0 w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-semibold shadow-md">
                 AI
               </div>
               <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 shadow-sm">
@@ -242,7 +241,7 @@ const ChatComponent = ({ file }: { file: File }) => {
               disabled={
                 liveStatus === 'streaming' || liveStatus === 'submitted'
               }
-              className="flex-1 min-h-[80px] max-h-[200px] resize-none"
+              className="flex-1 min-h-20 max-h-50 resize-none"
               rows={3}
             />
             <Button

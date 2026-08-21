@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    qualities: [75, 90, 100],
     remotePatterns: [
       {
         hostname: 'gravatar.com',
@@ -12,4 +13,4 @@ const nextConfig = {
   },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
