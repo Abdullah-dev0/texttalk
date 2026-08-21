@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  serverExternalPackages: ['pdf-parse', '@napi-rs/canvas'],
   images: {
     qualities: [75, 90, 100],
     remotePatterns: [
@@ -14,3 +15,4 @@ const nextConfig = {
 };
 
 export default nextConfig;
+
