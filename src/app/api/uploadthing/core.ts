@@ -2,6 +2,7 @@ import { currentUser } from '@clerk/nextjs/server';
 import { Document } from '@langchain/core/documents';
 import { PineconeStore } from '@langchain/pinecone';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { CanvasFactory } from 'pdf-parse/worker';
 import { PDFParse } from 'pdf-parse';
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
 import { UploadThingError } from 'uploadthing/server';
@@ -40,6 +41,7 @@ export const ourFileRouter: FileRouter = {
 
         const parser = new PDFParse({
           data: new Uint8Array(await response.arrayBuffer()),
+          CanvasFactory,
         });
         const parsedPdf = await parser
           .getText()
@@ -82,7 +84,9 @@ export const ourFileRouter: FileRouter = {
             id: createdFile.id,
           },
         });
-      } catch {
+      } catch (error) {
+        console.error('PDF processing failed:', error);
+
         await db.file.update({
           data: {
             uploadStatus: 'FAILED',
