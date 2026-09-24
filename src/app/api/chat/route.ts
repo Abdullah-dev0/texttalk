@@ -19,7 +19,7 @@ export const maxDuration = 60;
 
 // Create Gemini model instance
 const google = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_API_KEY });
-const model = google('gemini-3.8-flash');
+const model = google('gemini-3.6-flash');
 
 export const POST = async (req: NextRequest) => {
   const {
