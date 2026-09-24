@@ -1,7 +1,16 @@
+import { auth } from '@clerk/nextjs/server';
+import { redirect } from 'next/navigation';
+
 import FilesCard from '@/components/FilesCard';
 import UploadButton from '@/components/UploadButton';
 
-const Dashboard = () => {
+const Dashboard = async () => {
+  const { userId } = await auth();
+
+  if (!userId) {
+    redirect(`/sign-in?redirect_url=${encodeURIComponent('/dashboard')}`);
+  }
+
   return (
     <main className="flex flex-col">
       <div className="mt-8 flex flex-col justify-end gap-4 border-b border-gray-200 pb-5">

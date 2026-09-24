@@ -103,7 +103,7 @@ export const POST = async (req: NextRequest) => {
   const result = streamText({
     model,
     system: systemPrompt,
-    messages: convertToModelMessages(messages),
+    messages: await convertToModelMessages(messages),
     maxOutputTokens: 512,
     temperature: 0.3,
     abortSignal: req.signal,

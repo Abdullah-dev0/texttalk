@@ -7,13 +7,13 @@ import ChatComponent from '@/components/chat/ChatComponent';
 import { Button } from '@/components/ui/button';
 import { db } from '@/db';
 interface PageProps {
-  params: {
+  params: Promise<{
     fileid: string;
-  };
+  }>;
 }
 
 const Page = async ({ params }: PageProps) => {
-  const { fileid } = params;
+  const { fileid } = await params;
 
   const user = await auth();
 

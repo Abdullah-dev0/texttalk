@@ -1,7 +1,9 @@
 import { currentUser } from '@clerk/nextjs/server';
-import { PDFLoader } from '@langchain/community/document_loaders/fs/pdf';
+import { Document } from '@langchain/core/documents';
 import { PineconeStore } from '@langchain/pinecone';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
+import { CanvasFactory } from 'pdf-parse/worker';
+import { PDFParse } from 'pdf-parse';
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
 import { UploadThingError } from 'uploadthing/server';
 
@@ -33,9 +35,25 @@ export const ourFileRouter: FileRouter = {
 
       try {
         const response = await fetch(file.ufsUrl);
-        const blob = await response.blob();
-        const loader = new PDFLoader(blob);
-        const pageLevelDocs = await loader.load();
+        if (!response.ok) {
+          throw new Error(`Failed to download PDF: ${response.status}`);
+        }
+
+        const parser = new PDFParse({
+          data: new Uint8Array(await response.arrayBuffer()),
+          CanvasFactory,
+        });
+        const parsedPdf = await parser
+          .getText()
+          .finally(async () => parser.destroy());
+
+        const pageLevelDocs = parsedPdf.pages.map(
+          (page) =>
+            new Document({
+              pageContent: page.text,
+              metadata: { loc: { pageNumber: page.num } },
+            })
+        );
 
         const splitter = new RecursiveCharacterTextSplitter({
           chunkSize: 2000,
@@ -66,7 +84,9 @@ export const ourFileRouter: FileRouter = {
             id: createdFile.id,
           },
         });
-      } catch {
+      } catch (error) {
+        console.error('PDF processing failed:', error);
+
         await db.file.update({
           data: {
             uploadStatus: 'FAILED',

@@ -25,14 +25,17 @@ export function constructMetadata({
   icons?: string;
   noIndex?: boolean;
 } = {}): Metadata {
+  const siteUrl = new URL('https://texttalk.abdullahtech.me');
+
   return {
+    metadataBase: siteUrl,
     title,
     description,
     openGraph: {
       title,
       description,
       type: 'website',
-      url: 'https://texttalk.abdullahtech.me',
+      url: siteUrl,
       images: [
         {
           url: image,

@@ -1,6 +1,6 @@
 'use client';
 
-import { SignedIn, UserButton, SignedOut } from '@clerk/nextjs';
+import { Show, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 
 import { Button } from './ui/button';
@@ -13,15 +13,15 @@ const Navbar = () => {
           <span className="text-lg">TextTalk</span>
         </Link>
 
-        <SignedIn>
+        <Show when="signed-in">
           <UserButton />
-        </SignedIn>
+        </Show>
 
-        <SignedOut>
+        <Show when="signed-out">
           <Link href="/sign-in">
             <Button className="cursor-pointer">Login</Button>
           </Link>
-        </SignedOut>
+        </Show>
       </div>
     </nav>
   );
