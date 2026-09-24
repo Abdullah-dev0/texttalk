@@ -18,7 +18,7 @@ import { chatPrompt } from '@/lib/templates/chat-templates';
 export const maxDuration = 60;
 
 // Create Mistral model instance
-const model = mistral('mistral-large-latest');
+const model = mistral('mistral-small-latest');
 
 export const POST = async (req: NextRequest) => {
   const {
