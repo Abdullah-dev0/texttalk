@@ -1,4 +1,4 @@
-import { mistral } from '@ai-sdk/mistral';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { currentUser } from '@clerk/nextjs/server';
 import { PineconeStore } from '@langchain/pinecone';
 import {
@@ -17,8 +17,9 @@ import { chatPrompt } from '@/lib/templates/chat-templates';
 
 export const maxDuration = 60;
 
-// Create Mistral model instance
-const model = mistral('mistral-small-latest');
+// Create Gemini model instance
+const google = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_API_KEY });
+const model = google('gemini-3.8-flash');
 
 export const POST = async (req: NextRequest) => {
   const {
