@@ -2,8 +2,8 @@ import { currentUser } from '@clerk/nextjs/server';
 import { Document } from '@langchain/core/documents';
 import { PineconeStore } from '@langchain/pinecone';
 import { RecursiveCharacterTextSplitter } from '@langchain/textsplitters';
-import { CanvasFactory } from 'pdf-parse/worker';
 import { PDFParse } from 'pdf-parse';
+import { CanvasFactory } from 'pdf-parse/worker';
 import { createUploadthing, type FileRouter } from 'uploadthing/next';
 import { UploadThingError } from 'uploadthing/server';
 

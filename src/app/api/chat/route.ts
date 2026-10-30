@@ -100,6 +100,36 @@ export const POST = async (req: NextRequest) => {
   // Create system prompt using the template
   const systemPrompt = chatPrompt(context, chatHistory, language);
 
+  // Saves the user's question and the AI's answer (full or partial).
+  const saveExchange = async (aiText: string) => {
+    // Create user message first
+    await db.message.create({
+      data: {
+        text: messageText,
+        isUserMessage: true,
+        userId: user.id,
+        fileId,
+      },
+    });
+
+    // Small delay to ensure different timestamps
+    await new Promise((resolve) => setTimeout(resolve, 1));
+
+    // Then create AI response
+    await db.message.create({
+      data: {
+        text: aiText,
+        isUserMessage: false,
+        fileId,
+        userId: user.id,
+      },
+    });
+  };
+
+  // Text received so far. The AI SDK does not call onFinish when a response
+  // is cancelled, so we collect the text ourselves to save it in onAbort.
+  let partialText = '';
+
   // Generate response using AI SDK
   const result = streamText({
     model,
@@ -108,32 +138,24 @@ export const POST = async (req: NextRequest) => {
     maxOutputTokens: 512,
     temperature: 0.3,
     abortSignal: req.signal,
+    onChunk: ({ chunk }) => {
+      if (chunk.type === 'text-delta') partialText += chunk.text;
+    },
     onFinish: async ({ text: generatedText }) => {
       try {
-        // Create user message first
-        await db.message.create({
-          data: {
-            text: messageText,
-            isUserMessage: true,
-            userId: user.id,
-            fileId,
-          },
-        });
-
-        // Small delay to ensure different timestamps
-        await new Promise((resolve) => setTimeout(resolve, 1));
-
-        // Then create AI response
-        await db.message.create({
-          data: {
-            text: generatedText,
-            isUserMessage: false,
-            fileId,
-            userId: user.id,
-          },
-        });
+        await saveExchange(generatedText);
       } catch (error) {
         console.error('Error in onFinish callback:', error);
+      }
+    },
+    // Runs when the user presses Stop (or the connection closes).
+    // Keep what the user already saw so reloading the page matches the chat.
+    onAbort: async () => {
+      if (!partialText.trim()) return; // nothing was shown, nothing to save
+      try {
+        await saveExchange(partialText);
+      } catch (error) {
+        console.error('Error in onAbort callback:', error);
       }
     },
   });
