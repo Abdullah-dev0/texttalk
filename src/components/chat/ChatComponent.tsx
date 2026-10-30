@@ -5,7 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import { File } from '@prisma/client';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { DefaultChatTransport } from 'ai';
-import { ChevronLeft, Loader2, Send } from 'lucide-react';
+import { ChevronLeft, Loader2, Send, Square } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -33,14 +33,16 @@ const ChatComponent = ({ file }: { file: File }) => {
     messages: liveMessages,
     sendMessage,
     status: liveStatus,
-    setMessages,
+    stop,
   } = useChat({
     transport: new DefaultChatTransport({ api: '/api/chat' }),
+    // Keep the conversation on screen when a request fails; just tell the user.
     onError: (error) => {
       toast.error(error.message || 'An error occurred');
-      setMessages([]);
     },
   });
+
+  const isResponding = liveStatus === 'submitted' || liveStatus === 'streaming';
 
   const {
     data: historyData,
@@ -238,23 +240,31 @@ const ChatComponent = ({ file }: { file: File }) => {
                 }
               }}
               placeholder="Ask about your PDF"
-              disabled={
-                liveStatus === 'streaming' || liveStatus === 'submitted'
-              }
+              disabled={isResponding}
               className="flex-1 min-h-20 max-h-50 resize-none"
               rows={3}
             />
-            <Button
-              type="submit"
-              disabled={
-                liveStatus === 'streaming' ||
-                !input.trim() ||
-                liveStatus === 'submitted'
-              }
-              className="shrink-0"
-            >
-              <Send className="h-4 w-4" />
-            </Button>
+            {isResponding ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={stop}
+                aria-label="Stop generating"
+                title="Stop generating"
+                className="shrink-0"
+              >
+                <Square className="h-4 w-4 fill-current" />
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                disabled={!input.trim()}
+                aria-label="Send message"
+                className="shrink-0"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            )}
           </form>
         </div>
       </div>
