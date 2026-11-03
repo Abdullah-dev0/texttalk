@@ -57,6 +57,10 @@ const MessageItem = ({
         ?.map((part) => part.text)
         ?.join('') || '';
 
+  // The AI's reply exists (with its id) before its first word arrives;
+  // "AI is thinking..." covers that time, so don't show an empty bubble.
+  if (!isUser && !messageText) return null;
+
   return (
     <div className={`flex gap-4 ${isUser ? 'justify-end' : 'justify-start'}`}>
       {/* AI Avatar */}
