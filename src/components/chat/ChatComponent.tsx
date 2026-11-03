@@ -35,7 +35,13 @@ const ChatComponent = ({ file }: { file: File }) => {
     status: liveStatus,
     stop,
   } = useChat({
-    transport: new DefaultChatTransport({ api: '/api/chat' }),
+    transport: new DefaultChatTransport({
+      api: '/api/chat',
+      // Send only the new message; the server loads the history itself.
+      prepareSendMessagesRequest: ({ messages, body }) => ({
+        body: { ...body, message: messages[messages.length - 1] },
+      }),
+    }),
     // Keep the conversation on screen when a request fails; just tell the user.
     onError: (error) => {
       toast.error(error.message || 'An error occurred');
@@ -177,9 +183,9 @@ const ChatComponent = ({ file }: { file: File }) => {
           ))}
 
           {/* Live Messages */}
-          {liveMessages.map((message, index) => (
+          {liveMessages.map((message) => (
             <MessageItem
-              key={`live-${index}`}
+              key={`live-${message.id}`}
               message={message}
               user={user || null}
               isHistory={false}
