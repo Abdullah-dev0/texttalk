@@ -83,14 +83,25 @@ export const POST = async (req: NextRequest) => {
   ]);
 
   // Saved messages are UIMessages already; re-order them to chronological.
-  const uiMessages: UIMessage[] = [
-    ...prevMessagesList.reverse().map((msg): UIMessage => ({
-      id: msg.id,
-      role: msg.role,
-      parts: msg.parts as UIMessage['parts'],
-    })),
-    message,
-  ];
+  const history = prevMessagesList.reverse().map((msg): UIMessage => ({
+    id: msg.id,
+    role: msg.role,
+    parts: msg.parts as UIMessage['parts'],
+  }));
+  const uiMessages: UIMessage[] = [...history, message];
+
+  // Gemini's copy of the question also names the answer language: the latest
+  // message outweighs the system prompt and earlier replies in another
+  // language. The saved and shown message stays as the user typed it.
+  const modelMessages = await convertToModelMessages([
+    ...history,
+    {
+      ...message,
+      parts: [
+        { type: 'text', text: `${messageText}\n\n(Answer in ${language}.)` },
+      ],
+    },
+  ]);
 
   const context = retrievedDocs
     .map((doc) => {
@@ -104,7 +115,7 @@ export const POST = async (req: NextRequest) => {
   const result = streamText({
     model,
     instructions: chatPrompt(context, language),
-    messages: await convertToModelMessages(uiMessages),
+    messages: modelMessages,
     temperature: 0.3,
     abortSignal: req.signal,
     // streamText keeps errors out of the response, so log them here.
