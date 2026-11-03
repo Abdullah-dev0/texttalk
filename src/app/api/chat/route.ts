@@ -117,7 +117,6 @@ export const POST = async (req: NextRequest) => {
     model,
     system: systemPrompt,
     messages: await convertToModelMessages(uiMessages),
-    maxOutputTokens: 512,
     temperature: 0.3,
     abortSignal: req.signal,
   });
