@@ -2,7 +2,9 @@ import { z } from 'zod';
 
 import { languages } from '@/constant';
 
-// The body of POST /api/chat: only the new message, as useChat made it.
+// The body of POST /api/chat: only the new message, as useChat's
+// sendMessage({ text }) makes it: one non-empty text part. Other fields are
+// dropped, so the parsed message is safe to send to the model and save.
 // Its id is kept as the message's database id.
 export const SendMessageValidator = z.object({
   fileId: z.string(),
@@ -14,9 +16,9 @@ export const SendMessageValidator = z.object({
   message: z.object({
     id: z.string().regex(/^[\w-]{1,64}$/),
     role: z.literal('user'),
-    parts: z.array(
-      z.object({ type: z.string(), text: z.string().optional() }).loose()
-    ),
+    parts: z.tuple([
+      z.object({ type: z.literal('text'), text: z.string().trim().min(1) }),
+    ]),
   }),
 });
 

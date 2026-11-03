@@ -1,5 +1,5 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
-import { currentUser } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { PineconeStore } from '@langchain/pinecone';
 import { Prisma } from '@prisma/client';
 import {
@@ -32,9 +32,6 @@ const model = google('gemini-3.6-flash');
 // IDs for the AI's messages, made on the server so they are known before saving.
 const generateMessageId = createIdGenerator({ prefix: 'msg', size: 16 });
 
-const textOf = (message: UIMessage) =>
-  message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('');
-
 export const POST = async (req: NextRequest) => {
   // When the question was asked. The answer is saved later, so it always
   // sorts after the question.
@@ -45,19 +42,16 @@ export const POST = async (req: NextRequest) => {
 
   if (!parsed.success) return new Response('Bad request', { status: 400 });
 
+  // The validator kept only one text part, so this is the whole question.
   const { message, fileId, language } = parsed.data;
+  const messageText = message.parts[0].text;
 
-  const messageText = textOf(message as UIMessage);
+  // Reads the user id from the session; currentUser() would also call Clerk's API.
+  const { userId } = await auth();
 
-  if (!messageText.trim()) {
-    return new Response('Message is required', { status: 400 });
-  }
+  if (!userId) return new Response('Unauthorized', { status: 401 });
 
-  const user = await currentUser();
-
-  if (!user) return new Response('Unauthorized', { status: 401 });
-
-  const { success } = await rateLimiter.limit(user.id);
+  const { success } = await rateLimiter.limit(userId);
   if (!success) {
     return new Response('Rate limit exceeded please try again later', {
       status: 429,
@@ -67,7 +61,7 @@ export const POST = async (req: NextRequest) => {
   const file = await db.file.findFirst({
     where: {
       id: fileId,
-      userId: user.id,
+      userId,
     },
   });
 
@@ -88,13 +82,6 @@ export const POST = async (req: NextRequest) => {
     }),
   ]);
 
-  // Rebuilt with only its text, so a client can't save or send other parts.
-  const question: UIMessage = {
-    id: message.id,
-    role: 'user',
-    parts: [{ type: 'text', text: messageText }],
-  };
-
   // Saved messages are UIMessages already; re-order them to chronological.
   const uiMessages: UIMessage[] = [
     ...prevMessagesList.reverse().map((msg): UIMessage => ({
@@ -102,7 +89,7 @@ export const POST = async (req: NextRequest) => {
       role: msg.role,
       parts: msg.parts as UIMessage['parts'],
     })),
-    question,
+    message,
   ];
 
   const context = retrievedDocs
@@ -112,14 +99,11 @@ export const POST = async (req: NextRequest) => {
     })
     .join('\n\n');
 
-  // Create system prompt using the template
-  const systemPrompt = chatPrompt(context, language);
-
   // Generate response using AI SDK. Stop in the browser closes the request,
   // and req.signal then stops Gemini too.
   const result = streamText({
     model,
-    instructions: systemPrompt,
+    instructions: chatPrompt(context, language),
     messages: await convertToModelMessages(uiMessages),
     temperature: 0.3,
     abortSignal: req.signal,
@@ -136,18 +120,20 @@ export const POST = async (req: NextRequest) => {
       // then responseMessage holds what the user already saw, so reloading the
       // page matches the chat.
       onEnd: async ({ responseMessage }) => {
-        // nothing was shown, nothing to save
-        if (!textOf(responseMessage).trim()) return;
+        const hasText = responseMessage.parts.some(
+          (part) => part.type === 'text' && part.text.trim()
+        );
+        if (!hasText) return; // nothing was shown, nothing to save
         try {
           await db.message.createMany({
             data: [
               {
-                id: question.id,
+                id: message.id,
                 role: 'user',
                 // Parts are plain JSON data; the cast only tells TypeScript
                 // they fit Prisma's Json type.
-                parts: question.parts as Prisma.InputJsonValue,
-                userId: user.id,
+                parts: message.parts as Prisma.InputJsonValue,
+                userId,
                 fileId,
                 createdAt: askedAt,
               },
@@ -155,7 +141,7 @@ export const POST = async (req: NextRequest) => {
                 id: responseMessage.id,
                 role: 'assistant',
                 parts: responseMessage.parts as Prisma.InputJsonValue,
-                userId: user.id,
+                userId,
                 fileId,
                 createdAt: new Date(),
               },
