@@ -50,6 +50,14 @@ const ChatComponent = ({ file }: { file: File }) => {
 
   const isResponding = liveStatus === 'submitted' || liveStatus === 'streaming';
 
+  // Show "AI is thinking..." until the reply's first word arrives. The status
+  // turns to 'streaming' a moment before that, so it can't be used alone.
+  const lastLive = liveMessages[liveMessages.length - 1];
+  const replyHasText =
+    lastLive?.role === 'assistant' &&
+    lastLive.parts.some((part) => part.type === 'text' && part.text !== '');
+  const isThinking = isResponding && !replyHasText;
+
   const {
     data: historyData,
     status: historyStatus,
@@ -208,7 +216,7 @@ const ChatComponent = ({ file }: { file: File }) => {
           )}
 
           {/* Typing indicator */}
-          {liveStatus === 'submitted' && (
+          {isThinking && (
             <div className="flex gap-4 justify-start mt-6">
               <div className="shrink-0 w-10 h-10 bg-linear-to-br from-blue-500 to-purple-600 text-white rounded-full flex items-center justify-center text-lg font-semibold shadow-md">
                 AI
