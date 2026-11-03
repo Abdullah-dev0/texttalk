@@ -44,11 +44,16 @@ model File {
   userId    String
 }
 
-model Message {
-  id   String @id @default(cuid()) @map("_id")
-  text String
+enum MessageRole {
+  user
+  assistant
+}
 
-  isUserMessage Boolean
+// Stored as useChat's UIMessage: id, role and parts.
+model Message {
+  id    String      @id @default(cuid()) @map("_id")
+  role  MessageRole
+  parts Json
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

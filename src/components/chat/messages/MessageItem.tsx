@@ -1,61 +1,33 @@
 'use client';
 
-import type { UIMessage } from 'ai';
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 
+import type { ChatMessage } from '@/actions/messages.action';
 import { formatTime } from '@/lib/time-utils';
 
-interface HistoryMessage {
-  id: string;
-  text: string;
-  isUserMessage: boolean;
-  createdAt: string;
-}
-
-// Type for text parts from UIMessage
-interface TextMessagePart {
-  type: 'text';
-  text: string;
-}
-
 interface MessageItemProps {
-  message: HistoryMessage | UIMessage;
+  // Saved and live messages have the same shape.
+  message: ChatMessage;
   user: {
     imageUrl?: string | null;
     firstName?: string | null;
     emailAddresses?: Array<{ emailAddress: string }>;
   } | null;
-  isHistory?: boolean;
 }
 
-const MessageItem = ({
-  message,
-  user,
-  isHistory = false,
-}: MessageItemProps) => {
-  // Type guards to determine message type
-  const isHistoryMessage = (
-    msg: HistoryMessage | UIMessage
-  ): msg is HistoryMessage => {
-    return 'isUserMessage' in msg;
-  };
-
-  const isUser = isHistoryMessage(message)
-    ? message.isUserMessage
-    : message.role === 'user';
-
+const MessageItem = ({ message, user }: MessageItemProps) => {
   // Skip system messages
-  if (!isHistoryMessage(message) && message.role === 'system') {
-    return null;
-  }
+  if (message.role === 'system') return null;
 
-  const messageText = isHistoryMessage(message)
-    ? message.text
-    : message.parts
-        ?.filter((part): part is TextMessagePart => part.type === 'text')
-        ?.map((part) => part.text)
-        ?.join('') || '';
+  const isUser = message.role === 'user';
+
+  const messageText = message.parts
+    .map((part) => (part.type === 'text' ? part.text : ''))
+    .join('');
+
+  // Saved messages know their time; a live one has just been written.
+  const createdAt = message.metadata?.createdAt;
 
   // The AI's reply exists (with its id) before its first word arrives;
   // "AI is thinking..." covers that time, so don't show an empty bubble.
@@ -77,9 +49,7 @@ const MessageItem = ({
           </div>
         </div>
         <div className="text-xs mt-2 opacity-70 text-muted-foreground">
-          {isHistory && isHistoryMessage(message)
-            ? formatTime(message.createdAt)
-            : 'just now'}
+          {createdAt ? formatTime(createdAt) : 'just now'}
         </div>
       </div>
 

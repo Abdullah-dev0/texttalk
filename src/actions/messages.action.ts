@@ -1,21 +1,15 @@
 'use server';
 
 import { auth } from '@clerk/nextjs/server';
+import type { UIMessage } from 'ai';
 
 import { db } from '@/db';
 
-export type MessageDTO = {
-  id: string;
-  text: string;
-  isUserMessage: boolean;
-  createdAt: string;
-  updatedAt: string;
-  userId: string | null;
-  fileId: string;
-};
+// A chat message as useChat sees it. Saved messages carry their time in metadata.
+export type ChatMessage = UIMessage<{ createdAt?: string }>;
 
 export type MessagesPage = {
-  items: MessageDTO[];
+  items: ChatMessage[];
   cursor?: string; // for pagination
 };
 
@@ -50,12 +44,9 @@ export async function getMessages({
   return {
     items: messages.map((m) => ({
       id: m.id,
-      text: m.text,
-      isUserMessage: m.isUserMessage,
-      createdAt: m.createdAt.toISOString(),
-      updatedAt: m.updatedAt.toISOString(),
-      userId: m.userId ?? null,
-      fileId: m.fileId,
+      role: m.role,
+      parts: m.parts as ChatMessage['parts'],
+      metadata: { createdAt: m.createdAt.toISOString() },
     })),
     cursor:
       messages.length === take

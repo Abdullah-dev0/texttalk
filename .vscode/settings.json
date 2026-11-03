@@ -27,5 +27,8 @@
   "dart.debugExternalPackageLibraries": true,
   "dart.debugSdkLibraries": true,
   "git.autoRepositoryDetection": "subFolders",
+  // The project uses Prisma 6: Prisma 7 has no MongoDB support, and the
+  // extension otherwise checks schema.prisma against Prisma 7 rules.
+  "prisma.pinToPrisma6": true,
   "postman.settings.dotenv-detection-notification-visibility": false
 }
