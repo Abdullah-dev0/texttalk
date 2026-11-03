@@ -115,10 +115,12 @@ export const POST = async (req: NextRequest) => {
   // and req.signal then stops Gemini too.
   const result = streamText({
     model,
-    system: systemPrompt,
+    instructions: systemPrompt,
     messages: await convertToModelMessages(uiMessages),
     temperature: 0.3,
     abortSignal: req.signal,
+    // streamText keeps errors out of the response, so log them here.
+    onError: ({ error }) => console.error('Chat stream error:', error),
   });
 
   return createUIMessageStreamResponse({
