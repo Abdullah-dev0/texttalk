@@ -4,7 +4,10 @@ import { PineconeStore } from '@langchain/pinecone';
 import {
   consumeStream,
   convertToModelMessages,
+  createIdGenerator,
+  createUIMessageStreamResponse,
   streamText,
+  toUIMessageStream,
   UIMessage,
 } from 'ai';
 import { NextRequest } from 'next/server';
@@ -14,20 +17,37 @@ import { embeddings } from '@/lib/embeddings';
 import index from '@/lib/pinecone';
 import { rateLimiter } from '@/lib/rateLimiter';
 import { chatPrompt } from '@/lib/templates/chat-templates';
+import { SendMessageValidator } from '@/lib/validators/SendMessageValidator';
 
 export const maxDuration = 60;
+
+// How many earlier messages the model sees.
+const HISTORY_SIZE = 6;
 
 // Create Gemini model instance
 const google = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_API_KEY });
 const model = google('gemini-3.6-flash');
 
+// IDs for the AI's messages, made on the server so they are known before saving.
+const generateMessageId = createIdGenerator({ prefix: 'msg', size: 16 });
+
+const textOf = (message: UIMessage) =>
+  message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('');
+
 export const POST = async (req: NextRequest) => {
-  const {
-    messages,
-    fileId,
-    language,
-  }: { messages: UIMessage[]; fileId: string; language: string } =
-    await req.json();
+  // When the question was asked. The answer is saved later, so it always
+  // sorts after the question.
+  const askedAt = new Date();
+
+  // The client sends only the new message; the history comes from the database.
+  const parsed = SendMessageValidator.safeParse(await req.json());
+  if (!parsed.success) return new Response('Bad request', { status: 400 });
+
+  const { message, fileId, language } = parsed.data;
+  const messageText = textOf(message as UIMessage);
+  if (!messageText.trim()) {
+    return new Response('Message is required', { status: 400 });
+  }
 
   const user = await currentUser();
 
@@ -49,16 +69,6 @@ export const POST = async (req: NextRequest) => {
 
   if (!file) return new Response('Not found', { status: 404 });
 
-  // Get last message
-  const lastMessage = messages[messages.length - 1];
-
-  const textParts = lastMessage.parts.filter(
-    (part): part is { type: 'text'; text: string } => part.type === 'text'
-  );
-
-  // Grab the last text part's text
-  const messageText = textParts.at(-1)?.text || '';
-
   const vectorStorePromise = PineconeStore.fromExistingIndex(embeddings, {
     pineconeIndex: index,
     namespace: file.id,
@@ -70,18 +80,26 @@ export const POST = async (req: NextRequest) => {
     db.message.findMany({
       where: { fileId },
       orderBy: { createdAt: 'desc' },
-      take: 6,
+      take: HISTORY_SIZE,
     }),
   ]);
 
-  // Re-order to chronological
-  const formattedPrevMessages = prevMessagesList
-    .slice()
-    .reverse()
-    .map((msg) => ({
-      role: msg.isUserMessage ? ('user' as const) : ('assistant' as const),
-      content: msg.text,
-    }));
+  // Re-order to chronological, then add the new question
+  const uiMessages: UIMessage[] = [
+    ...prevMessagesList
+      .slice()
+      .reverse()
+      .map((msg): UIMessage => ({
+        id: msg.id,
+        role: msg.isUserMessage ? 'user' : 'assistant',
+        parts: [{ type: 'text', text: msg.text }],
+      })),
+    {
+      id: message.id,
+      role: 'user',
+      parts: [{ type: 'text', text: messageText }],
+    },
+  ];
 
   const context = retrievedDocs
     .map((doc) => {
@@ -90,77 +108,59 @@ export const POST = async (req: NextRequest) => {
     })
     .join('\n\n');
 
-  const chatHistory = formattedPrevMessages
-    .map((message) => {
-      if (message.role === 'user') return `User: ${message.content}\n`;
-      return `Assistant: ${message.content}\n`;
-    })
-    .join('');
-
   // Create system prompt using the template
-  const systemPrompt = chatPrompt(context, chatHistory, language);
+  const systemPrompt = chatPrompt(context, language);
 
-  // Saves the user's question and the AI's answer (full or partial).
-  const saveExchange = async (aiText: string) => {
-    // Create user message first
-    await db.message.create({
-      data: {
-        text: messageText,
-        isUserMessage: true,
-        userId: user.id,
-        fileId,
-      },
-    });
-
-    // Small delay to ensure different timestamps
-    await new Promise((resolve) => setTimeout(resolve, 1));
-
-    // Then create AI response
-    await db.message.create({
-      data: {
-        text: aiText,
-        isUserMessage: false,
-        fileId,
-        userId: user.id,
-      },
-    });
-  };
-
-  // Text received so far. The AI SDK does not call onFinish when a response
-  // is cancelled, so we collect the text ourselves to save it in onAbort.
-  let partialText = '';
-
-  // Generate response using AI SDK
+  // Generate response using AI SDK. Stop in the browser closes the request,
+  // and req.signal then stops Gemini too.
   const result = streamText({
     model,
     system: systemPrompt,
-    messages: await convertToModelMessages(messages),
+    messages: await convertToModelMessages(uiMessages),
     maxOutputTokens: 512,
     temperature: 0.3,
     abortSignal: req.signal,
-    onChunk: ({ chunk }) => {
-      if (chunk.type === 'text-delta') partialText += chunk.text;
-    },
-    onFinish: async ({ text: generatedText }) => {
-      try {
-        await saveExchange(generatedText);
-      } catch (error) {
-        console.error('Error in onFinish callback:', error);
-      }
-    },
-    // Runs when the user presses Stop (or the connection closes).
-    // Keep what the user already saw so reloading the page matches the chat.
-    onAbort: async () => {
-      if (!partialText.trim()) return; // nothing was shown, nothing to save
-      try {
-        await saveExchange(partialText);
-      } catch (error) {
-        console.error('Error in onAbort callback:', error);
-      }
-    },
   });
 
-  return result.toUIMessageStreamResponse({
+  return createUIMessageStreamResponse({
+    stream: toUIMessageStream({
+      stream: result.stream,
+      originalMessages: uiMessages,
+      generateMessageId,
+      // Runs when the answer is complete, and also when the user pressed Stop:
+      // then responseMessage holds what the user already saw, so reloading the
+      // page matches the chat.
+      onEnd: async ({ responseMessage }) => {
+        const aiText = textOf(responseMessage);
+        if (!aiText.trim()) return; // nothing was shown, nothing to save
+        try {
+          await db.message.createMany({
+            data: [
+              {
+                id: message.id,
+                text: messageText,
+                isUserMessage: true,
+                userId: user.id,
+                fileId,
+                createdAt: askedAt,
+              },
+              {
+                id: responseMessage.id,
+                text: aiText,
+                isUserMessage: false,
+                userId: user.id,
+                fileId,
+                createdAt: new Date(),
+              },
+            ],
+          });
+        } catch (error) {
+          console.error('Error saving messages:', error);
+        }
+      },
+    }),
+    // Reads a copy of the stream to the end even after the client disconnects,
+    // so onEnd still runs when the user presses Stop.
     consumeSseStream: ({ stream }) => consumeStream({ stream }),
   });
 };

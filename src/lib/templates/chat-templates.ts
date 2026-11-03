@@ -1,8 +1,5 @@
-export const chatPrompt = (
-  context: string,
-  chatHistory: string,
-  language: string = 'english'
-) => {
+// The chat history is not in here: it is sent as messages.
+export const chatPrompt = (context: string, language: string = 'english') => {
   const languageInstruction =
     language === 'english'
       ? ''
@@ -58,8 +55,5 @@ All other queries MUST be answered using the provided context.
 **Context:**
 ${context}
 
-**Previous Chat History:**
-${chatHistory}
-
-Now, answer the user's question using only the information above.`;
+Now, answer the user's question using only the context above and the conversation so far.`;
 };
