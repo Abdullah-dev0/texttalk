@@ -35,10 +35,6 @@ const generateMessageId = createIdGenerator({ prefix: 'msg', size: 16 });
 const textOf = (message: UIMessage) =>
   message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('');
 
-// Parts as plain JSON for the database (drops undefined fields).
-const toJson = (parts: UIMessage['parts']) =>
-  JSON.parse(JSON.stringify(parts)) as Prisma.InputJsonValue;
-
 export const POST = async (req: NextRequest) => {
   // When the question was asked. The answer is saved later, so it always
   // sorts after the question.
@@ -46,10 +42,13 @@ export const POST = async (req: NextRequest) => {
 
   // The client sends only the new message; the history comes from the database.
   const parsed = SendMessageValidator.safeParse(await req.json());
+
   if (!parsed.success) return new Response('Bad request', { status: 400 });
 
   const { message, fileId, language } = parsed.data;
+
   const messageText = textOf(message as UIMessage);
+
   if (!messageText.trim()) {
     return new Response('Message is required', { status: 400 });
   }
@@ -145,7 +144,9 @@ export const POST = async (req: NextRequest) => {
               {
                 id: question.id,
                 role: 'user',
-                parts: toJson(question.parts),
+                // Parts are plain JSON data; the cast only tells TypeScript
+                // they fit Prisma's Json type.
+                parts: question.parts as Prisma.InputJsonValue,
                 userId: user.id,
                 fileId,
                 createdAt: askedAt,
@@ -153,7 +154,7 @@ export const POST = async (req: NextRequest) => {
               {
                 id: responseMessage.id,
                 role: 'assistant',
-                parts: toJson(responseMessage.parts),
+                parts: responseMessage.parts as Prisma.InputJsonValue,
                 userId: user.id,
                 fileId,
                 createdAt: new Date(),
