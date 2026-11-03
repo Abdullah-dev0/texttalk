@@ -1,6 +1,7 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { currentUser } from '@clerk/nextjs/server';
 import { PineconeStore } from '@langchain/pinecone';
+import { Prisma } from '@prisma/client';
 import {
   consumeStream,
   convertToModelMessages,
@@ -33,6 +34,10 @@ const generateMessageId = createIdGenerator({ prefix: 'msg', size: 16 });
 
 const textOf = (message: UIMessage) =>
   message.parts.map((part) => (part.type === 'text' ? part.text : '')).join('');
+
+// Parts as plain JSON for the database (drops undefined fields).
+const toJson = (parts: UIMessage['parts']) =>
+  JSON.parse(JSON.stringify(parts)) as Prisma.InputJsonValue;
 
 export const POST = async (req: NextRequest) => {
   // When the question was asked. The answer is saved later, so it always
@@ -84,21 +89,21 @@ export const POST = async (req: NextRequest) => {
     }),
   ]);
 
-  // Re-order to chronological, then add the new question
+  // Rebuilt with only its text, so a client can't save or send other parts.
+  const question: UIMessage = {
+    id: message.id,
+    role: 'user',
+    parts: [{ type: 'text', text: messageText }],
+  };
+
+  // Saved messages are UIMessages already; re-order them to chronological.
   const uiMessages: UIMessage[] = [
-    ...prevMessagesList
-      .slice()
-      .reverse()
-      .map((msg): UIMessage => ({
-        id: msg.id,
-        role: msg.isUserMessage ? 'user' : 'assistant',
-        parts: [{ type: 'text', text: msg.text }],
-      })),
-    {
-      id: message.id,
-      role: 'user',
-      parts: [{ type: 'text', text: messageText }],
-    },
+    ...prevMessagesList.reverse().map((msg): UIMessage => ({
+      id: msg.id,
+      role: msg.role,
+      parts: msg.parts as UIMessage['parts'],
+    })),
+    question,
   ];
 
   const context = retrievedDocs
@@ -132,23 +137,23 @@ export const POST = async (req: NextRequest) => {
       // then responseMessage holds what the user already saw, so reloading the
       // page matches the chat.
       onEnd: async ({ responseMessage }) => {
-        const aiText = textOf(responseMessage);
-        if (!aiText.trim()) return; // nothing was shown, nothing to save
+        // nothing was shown, nothing to save
+        if (!textOf(responseMessage).trim()) return;
         try {
           await db.message.createMany({
             data: [
               {
-                id: message.id,
-                text: messageText,
-                isUserMessage: true,
+                id: question.id,
+                role: 'user',
+                parts: toJson(question.parts),
                 userId: user.id,
                 fileId,
                 createdAt: askedAt,
               },
               {
                 id: responseMessage.id,
-                text: aiText,
-                isUserMessage: false,
+                role: 'assistant',
+                parts: toJson(responseMessage.parts),
                 userId: user.id,
                 fileId,
                 createdAt: new Date(),

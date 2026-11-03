@@ -11,8 +11,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
 
 import {
+  type ChatMessage,
   getMessages,
-  type MessageDTO,
   type MessagesPage,
 } from '@/actions/messages.action';
 
@@ -34,7 +34,7 @@ const ChatComponent = ({ file }: { file: File }) => {
     sendMessage,
     status: liveStatus,
     stop,
-  } = useChat({
+  } = useChat<ChatMessage>({
     transport: new DefaultChatTransport({
       api: '/api/chat',
       // Send only the new message; the server loads the history itself.
@@ -80,7 +80,7 @@ const ChatComponent = ({ file }: { file: File }) => {
     gcTime: Infinity,
   });
 
-  const historyFlat: MessageDTO[] = useMemo(() => {
+  const historyFlat: ChatMessage[] = useMemo(() => {
     if (!historyData?.pages) return [];
     return historyData.pages
       .flatMap((page: MessagesPage) => page.items)
@@ -186,7 +186,6 @@ const ChatComponent = ({ file }: { file: File }) => {
               key={`history-${message.id}`}
               message={message}
               user={user || null}
-              isHistory
             />
           ))}
 
@@ -196,7 +195,6 @@ const ChatComponent = ({ file }: { file: File }) => {
               key={`live-${message.id}`}
               message={message}
               user={user || null}
-              isHistory={false}
             />
           ))}
 
