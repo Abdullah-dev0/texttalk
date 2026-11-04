@@ -23,7 +23,7 @@ const UploadButton = () => {
       <DialogTrigger asChild>
         <Button className="w-fit ml-auto">Upload File</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] !left-[50%] !top-[50%] !translate-x-[-50%] !translate-y-[-50%]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader className="text-center">
           <DialogTitle className="text-2xl">Upload Your File</DialogTitle>
           <DialogDescription className="text-base">

@@ -32,7 +32,7 @@ const PdfFullscreen = ({ fileUrl, pageCount }: PdfFullscreenProps) => {
           <Expand className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-7xl w-full">
+      <DialogContent className="w-full sm:max-w-7xl">
         <div className="absolute left-6 top-5 text-sm text-muted-foreground">
           {pageCount ? `${pageCount} pages` : 'Loading page count…'}
         </div>
